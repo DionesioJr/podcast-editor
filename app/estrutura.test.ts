@@ -7,16 +7,26 @@ const tsconfig = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'tsconfig.json'), 'utf-8'),
 );
 
-const PASTAS_ESPERADAS = [
-  'components',
-  'config',
-  'constants',
-  'hooks',
-  'i18n',
-  'modules',
-  'providers',
-  'shared',
-];
+function lerPastasEsperadasDoClaudeMd(): string[] {
+  const claudeMd = fs.readFileSync(path.join(__dirname, 'CLAUDE.md'), 'utf-8');
+  const arquitetura = claudeMd.match(/## Arquitetura\n\n```\n([\s\S]*?)```/);
+
+  if (!arquitetura) {
+    throw new Error(
+      'Não achou o bloco de arquitetura em app/CLAUDE.md para extrair as pastas esperadas de src/.',
+    );
+  }
+
+  const pastas = [...arquitetura[1].matchAll(/[├└]── (\w+)\//g)].map((match) => match[1]);
+
+  if (pastas.length === 0) {
+    throw new Error('Não achou nenhuma pasta no bloco de arquitetura de app/CLAUDE.md.');
+  }
+
+  return pastas;
+}
+
+const PASTAS_ESPERADAS = lerPastasEsperadasDoClaudeMd();
 
 describe('Aliases do TypeScript (PDE-6)', () => {
   it('define baseUrl na raiz do app', () => {
