@@ -1,0 +1,2012 @@
+{
+ "summary": "Podcast Editor: 7 fases (F0 a F6), tarefas de até 3 pontos com dependências, na ordem de execução.",
+ "replace_draft": true,
+ "harness": "claude-code",
+ "milestones": [
+  {
+   "name": "F0 Fundação",
+   "goal": "Repositório, estrutura da api e do app na arquitetura do pust, health, docs, tema e providers."
+  },
+  {
+   "name": "F1 Base de mídia e IA",
+   "goal": "FFmpeg seguro, ffprobe, áudio, proxy, pausas, transcrição em pedaços e filtro de exportação com muitos cortes."
+  },
+  {
+   "name": "F2 Projeto, upload e transcrição",
+   "goal": "Projeto sem conta, upload retomável, processamento inicial, fila de jobs, SSE e transcrição na tela. RN-01 a RN-04."
+  },
+  {
+   "name": "F3 Timeline, cortes e exportação",
+   "goal": "Timeline, pausas, hesitações, edição pelo texto, desfazer e exportação horizontal. RN-05, RN-06, RN-11, RN-12."
+  },
+  {
+   "name": "F4 Legendas, áudio e vertical",
+   "goal": "Legendas, volume e formato vertical. RN-08, RN-09, RN-10."
+  },
+  {
+   "name": "F5 Corte inteligente com IA",
+   "goal": "Análise por IA, sugestões e aceite pelo usuário. RN-07."
+  },
+  {
+   "name": "F6 Limites, privacidade e lançamento",
+   "goal": "Limites, antiabuso, logs seguros, landing, mensagens, deploy e builds."
+  }
+ ],
+ "sprints": [
+  {
+   "name": "F0 Fundação",
+   "goal": "Repositório, estrutura da api e do app na arquitetura do pust, health, docs, tema e providers.",
+   "start_date": "2026-10-26",
+   "end_date": "2026-11-06"
+  },
+  {
+   "name": "F1 Base de mídia e IA",
+   "goal": "FFmpeg seguro, ffprobe, áudio, proxy, pausas, transcrição em pedaços e filtro de exportação com muitos cortes.",
+   "start_date": "2026-11-09",
+   "end_date": "2026-11-20"
+  },
+  {
+   "name": "F2 Projeto, upload e transcrição",
+   "goal": "Projeto sem conta, upload retomável, processamento inicial, fila de jobs, SSE e transcrição na tela. RN-01 a RN-04.",
+   "start_date": "2026-11-23",
+   "end_date": "2026-12-18"
+  },
+  {
+   "name": "F3 Timeline, cortes e exportação",
+   "goal": "Timeline, pausas, hesitações, edição pelo texto, desfazer e exportação horizontal. RN-05, RN-06, RN-11, RN-12.",
+   "start_date": "2026-12-21",
+   "end_date": "2027-01-29"
+  },
+  {
+   "name": "F4 Legendas, áudio e vertical",
+   "goal": "Legendas, volume e formato vertical. RN-08, RN-09, RN-10.",
+   "start_date": "2027-02-01",
+   "end_date": "2027-02-26"
+  },
+  {
+   "name": "F5 Corte inteligente com IA",
+   "goal": "Análise por IA, sugestões e aceite pelo usuário. RN-07.",
+   "start_date": "2027-03-01",
+   "end_date": "2027-03-19"
+  },
+  {
+   "name": "F6 Limites, privacidade e lançamento",
+   "goal": "Limites, antiabuso, logs seguros, landing, mensagens, deploy e builds.",
+   "start_date": "2027-03-22",
+   "end_date": "2027-04-09"
+  }
+ ],
+ "items": [
+  {
+   "key": "a1",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Criar o esqueleto da API NestJS com estrutura de módulos e rota de saúde básica",
+   "objective": "Criar o projeto NestJS em api/ com pnpm, TypeScript, nest-cli, ESLint, Jest, a pasta src/modules e src/shared, os entrypoints main.ts e AppModule, e a rota GET /health devolvendo ok. Regras de negócio: Documento Técnico seções 1, 2 e 3. Pasta alvo: api/.",
+   "done_criteria": "- A api compila e sobe com pnpm start e GET /health responde 200 com status ok.\n- Existem src/modules e src/shared, sem arquivos index.ts.\n- Scripts de lint, build, test e test:e2e definidos no package.json.\n- Nenhum arquivo passa de 300 linhas.",
+   "task_type": "Configuração",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": []
+  },
+  {
+   "key": "a2",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Configurar Prisma com MariaDB e schema modular",
+   "objective": "Configurar o Prisma com provider mysql (MariaDB), DATABASE_URL por ambiente, o PrismaService e um script que compila os arquivos src/modules/*/prisma/*.prisma no schema.prisma da raiz. Regras de negócio: Documento Técnico seção 4 e decisões de arquitetura (Prisma e MariaDB). Pasta alvo: api/.",
+   "done_criteria": "- O script prisma:build junta os schemas dos módulos no schema.prisma da raiz.\n- PrismaService conecta no MariaDB e é exportado por um módulo compartilhado.\n- O schema.prisma da raiz tem só o generator, o datasource e o conteúdo compilado.\n- Há um módulo de exemplo com um .prisma próprio provando a compilação.",
+   "task_type": "Configuração",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a1"
+   ]
+  },
+  {
+   "key": "a3",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Configurar validação global, filtro de erros com code e variáveis de ambiente validadas",
+   "objective": "Registrar ValidationPipe global com class-validator, um filtro de exceções que devolve statusCode, code e message em português do Brasil, o ConfigModule com validação das variáveis e o throttler global por IP. Regras de negócio: Documento Técnico 11.1 e seção 9 do documento de regras (mensagens de erro). Pasta alvo: api/.",
+   "done_criteria": "- Erro de validação devolve 422 com code e message em português.\n- Variável de ambiente obrigatória ausente impede a API de subir com mensagem clara.\n- Throttler global ativo e configurável por ambiente.\n- Formato do erro: { statusCode, code, message }.",
+   "task_type": "Configuração",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a1"
+   ]
+  },
+  {
+   "key": "a4",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Publicar Swagger em /docs e prefixo /v1 com health de banco e disco",
+   "objective": "Configurar @nestjs/swagger com UI em /docs e JSON em /docs-json, o prefixo /v1 e ampliar o GET /health para verificar o MariaDB e o espaço livre em disco (MIN_FREE_DISK_GB). Regras de negócio: Documento Técnico 11.2 e 15.4. Pasta alvo: api/.",
+   "done_criteria": "- GET /docs mostra a UI e GET /docs-json devolve o OpenAPI.\n- GET /health devolve estado do banco e do disco e responde 503 se algum falhar.\n- Rotas ficam sob /v1, exceto /health e /docs.",
+   "task_type": "Configuração",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a2",
+    "a3"
+   ]
+  },
+  {
+   "key": "a5",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Criar o entrypoint do worker e o ecosystem.config.js do PM2",
+   "objective": "Criar worker.ts que sobe o contexto Nest sem HTTP e o ecosystem.config.js com os processos podcast-api e podcast-worker, autorestart, backoff e logs, como no pust/api. Regras de negócio: Documento Técnico seção 2 e 15.2. Pasta alvo: api/.",
+   "done_criteria": "- pnpm start:worker sobe o worker sem abrir porta HTTP.\n- ecosystem.config.js define os dois processos com autorestart e exp_backoff_restart_delay.\n- API e worker compartilham os mesmos módulos.",
+   "task_type": "Configuração",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a2"
+   ]
+  },
+  {
+   "key": "m1",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Criar o esqueleto do app Expo com Expo Router e a estrutura do pust/mobile",
+   "objective": "Criar o app Expo em app/ com Expo Router, TypeScript strict, pnpm, aliases @ e @src, ESLint, prettier, jest-expo e as pastas src/components, config, constants, hooks, i18n, modules, providers e shared. Regras de negócio: Documento Técnico seção 13.1 e 13.2. Pasta alvo: app/.",
+   "done_criteria": "- O app abre no navegador com pnpm web e mostra uma rota inicial.\n- Aliases @/* e @src/* funcionam no TypeScript e no Metro.\n- Estrutura de pastas igual à do pust/mobile e rotas só como entrypoints.",
+   "task_type": "Configuração",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": []
+  },
+  {
+   "key": "m2",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Implementar os tokens do tema a partir do style.css do template",
+   "objective": "Criar src/constants/theme.ts com as cores, raios, espaçamento, escala de fonte e fontes (Plus Jakarta Sans e Bricolage Grotesque) do style.css, mais os hooks use-palette e use-breakpoint. Regras de negócio: Template de interface, style.css; Documento Técnico 13.2. Pasta alvo: app/.",
+   "done_criteria": "- theme.ts reproduz os tokens do docs/template-editor/style.css sem valores soltos.\n- use-palette respeita claro e escuro quando houver variação.\n- use-breakpoint expõe useIsMobile e useIsNarrow.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "m1"
+   ]
+  },
+  {
+   "key": "m3",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Criar o CoreProvider e a configuração da URL da API",
+   "objective": "Criar o CoreProvider (I18n, Query, ColorScheme, Theme e Toast, nessa ordem), o i18n em pt-BR e src/config/api.ts lendo EXPO_PUBLIC_API_URL. Regras de negócio: Documento Técnico 13.2. Pasta alvo: app/.",
+   "done_criteria": "- O _layout.tsx envolve o app no CoreProvider.\n- i18n carrega apenas pt-BR.\n- BASE_URL vem de EXPO_PUBLIC_API_URL.",
+   "task_type": "Configuração",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "m2"
+   ]
+  },
+  {
+   "key": "m4",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Criar o cliente HTTP com tradução do code de erro",
+   "objective": "Criar o cliente HTTP, o api-error.ts e o interceptor que traduzem o code devolvido pela API usando i18n/errors.json, que já traz as mensagens da seção 9 do documento de regras. Regras de negócio: Seção 9 do documento de regras; Documento Técnico 13.4. Pasta alvo: app/.",
+   "done_criteria": "- Erro da API vira mensagem em português a partir do code.\n- Code desconhecido cai numa mensagem genérica sem inventar texto.\n- errors.json cobre todos os codes da seção 9 do documento de regras.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "m3"
+   ]
+  },
+  {
+   "key": "m5",
+   "epic": "Fundação",
+   "milestone": "F0 Fundação",
+   "sprint": "F0 Fundação",
+   "title": "Criar os componentes base de UI e o layout do cabeçalho",
+   "objective": "Criar em src/components/ui os componentes Button, Alert, Checkbox, ProgressBar e Card, e em layout o cabeçalho e o container responsivo do Editor.dc.html, todos usando os tokens do tema. Regras de negócio: Template de interface (Editor.dc.html e style.css). Pasta alvo: app/.",
+   "done_criteria": "- Componentes usam só tokens de theme.ts.\n- O cabeçalho e o container reproduzem o Editor.dc.html no celular e na tela larga.\n- Cada componente tem Container e View quando houver lógica.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "m2"
+   ]
+  },
+  {
+   "key": "f1",
+   "epic": "Base de mídia e IA",
+   "milestone": "F1 Base de mídia e IA",
+   "sprint": "F1 Base de mídia e IA",
+   "title": "Criar o módulo ffmpeg para executar FFmpeg e ffprobe com segurança",
+   "objective": "Criar o módulo ffmpeg que executa FFmpeg e ffprobe com spawn e argumentos fixos (sem shell), -protocol_whitelist file,pipe, timeout e leitura de -progress pipe:1. Regras de negócio: Documento Técnico 10 e 14. Pasta alvo: api/.",
+   "done_criteria": "- Nenhum comando passa por shell e dado do usuário nunca vira argumento sem validação.\n- O progresso é lido de -progress pipe:1 e devolvido como porcentagem.\n- O processo é encerrado no timeout ou no cancelamento.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a1"
+   ]
+  },
+  {
+   "key": "f2",
+   "epic": "Base de mídia e IA",
+   "milestone": "F1 Base de mídia e IA",
+   "sprint": "F1 Base de mídia e IA",
+   "title": "Ler e validar o vídeo com ffprobe",
+   "objective": "Ler duração, resolução, codecs e presença de trilha de áudio com ffprobe e validar contra os limites, devolvendo erro tipado com code (formato, tamanho, duração, sem áudio, arquivo corrompido). Regras de negócio: RN-01.3, RN-01.4, RN-01.5. Pasta alvo: api/.",
+   "done_criteria": "- Vídeo sem áudio devolve o code correspondente.\n- Arquivo corrompido ou que não é vídeo devolve o code correspondente.\n- A validação usa o conteúdo (ffprobe) e não a extensão.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "f1"
+   ]
+  },
+  {
+   "key": "f3",
+   "epic": "Base de mídia e IA",
+   "milestone": "F1 Base de mídia e IA",
+   "sprint": "F1 Base de mídia e IA",
+   "title": "Extrair o áudio e gerar o proxy 720p",
+   "objective": "Gerar audio.opus (mono, 16 kHz, 24 kbps) e proxy.mp4 (720p, H.264, frame rate constante, +faststart) a partir do original. Regras de negócio: RN-03; Documento Técnico 7. Pasta alvo: api/.",
+   "done_criteria": "- audio.opus e proxy.mp4 são criados na pasta do projeto.\n- O proxy toca em MKV, AVI e HEVC convertidos.\n- Falha de FFmpeg devolve erro tipado.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "f1"
+   ]
+  },
+  {
+   "key": "f4",
+   "epic": "Base de mídia e IA",
+   "milestone": "F1 Base de mídia e IA",
+   "sprint": "F1 Base de mídia e IA",
+   "title": "Criar o cliente OpenAI de transcrição com tempo por palavra",
+   "objective": "Criar o módulo openai com o cliente de transcrição: envia um áudio, devolve palavras com início e fim, usa OPENAI_TRANSCRIBE_MODEL e um prompt em estilo literal para registrar hesitações, e classifica erros temporários para retry. Regras de negócio: RN-04.1, RN-04.2, RN-04.7; Documento Técnico 7.1. Pasta alvo: api/.",
+   "done_criteria": "- Devolve a lista de palavras com w, s e e em milissegundos.\n- O modelo vem de OPENAI_TRANSCRIBE_MODEL.\n- Erro 5xx e 429 são classificados como temporários.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a3"
+   ]
+  },
+  {
+   "key": "f5",
+   "epic": "Base de mídia e IA",
+   "milestone": "F1 Base de mídia e IA",
+   "sprint": "F1 Base de mídia e IA",
+   "title": "Transcrever em pedaços de 10 minutos cortados no meio de uma pausa",
+   "objective": "Dividir o áudio em pedaços de cerca de 10 minutos cortados no meio de uma pausa, transcrever cada um e juntar as palavras somando o início do pedaço. Regras de negócio: RN-04.2; Documento Técnico 7.1. Pasta alvo: api/.",
+   "done_criteria": "- Nenhum pedaço corta uma palavra ao meio.\n- Os tempos finais batem com o áudio completo.\n- O limite de tamanho de arquivo da API é respeitado.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "f3",
+    "f4"
+   ]
+  },
+  {
+   "key": "f6",
+   "epic": "Base de mídia e IA",
+   "milestone": "F1 Base de mídia e IA",
+   "sprint": "F1 Base de mídia e IA",
+   "title": "Detectar silêncios, medir loudness e gerar a forma de onda",
+   "objective": "Executar silencedetect, a primeira passada do loudnorm e gerar waveform.json com os picos para a linha do tempo. Regras de negócio: RN-03; RN-05; RN-09; Documento Técnico 7. Pasta alvo: api/.",
+   "done_criteria": "- waveform.json tem picos suficientes para desenhar a linha do tempo.\n- A medição de loudness é guardada para o ajuste de volume.\n- Os silêncios detectados são devolvidos em milissegundos.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "f3"
+   ]
+  },
+  {
+   "key": "f7",
+   "epic": "Base de mídia e IA",
+   "milestone": "F1 Base de mídia e IA",
+   "sprint": "F1 Base de mídia e IA",
+   "title": "Montar o filtro de exportação com muitos cortes",
+   "objective": "Gerar o -filter_complex_script com trim e atrim de cada trecho mantido e concat, gravado em arquivo, e executar o FFmpeg com progresso. Regras de negócio: RN-12.1; Documento Técnico 10.4. Pasta alvo: api/.",
+   "done_criteria": "- Uma lista de 500 trechos gera um script válido e a duração final confere.\n- O filtro vai por arquivo e não por argumento.\n- Codificação H.264 veryfast crf 20, AAC 160 kbps, +faststart e frame rate constante, no máximo 1080p.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "f1"
+   ]
+  },
+  {
+   "key": "j1",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar a fila de jobs no MariaDB",
+   "objective": "Criar o módulo jobs com o schema da tabela jobs (tipo, status, payload, progress, step, attempts, error_code, locked_at) e o repository que pega o próximo job com SELECT FOR UPDATE SKIP LOCKED. Regras de negócio: Documento Técnico seção 6. Pasta alvo: api/.",
+   "done_criteria": "- Dois workers nunca pegam o mesmo job.\n- Status queued, running, done, failed e canceled implementados.\n- O repository fica atrás de interface e token de DI.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a2",
+    "a5"
+   ]
+  },
+  {
+   "key": "j2",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o executor do worker com retry, cancelamento e recuperação",
+   "objective": "Criar o executor que busca jobs por tipo com concorrência configurável, repete até 3 vezes em erro temporário, confere o cancelamento a cada 2 s e devolve à fila os jobs running com locked_at antigo ao iniciar. Regras de negócio: Documento Técnico seção 6. Pasta alvo: api/.",
+   "done_criteria": "- Erro de validação falha na hora e erro temporário repete até 3 vezes.\n- Job cancelado interrompe o FFmpeg em até 2 s.\n- Job running com locked_at antigo volta para a fila ao iniciar o worker.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "j1"
+   ]
+  },
+  {
+   "key": "pr1",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o módulo projects com schema e repository",
+   "objective": "Criar o módulo projects com o schema (status, token_hash, ip_hash, metadados do vídeo, has_speech, low_quality, settings, expires_at) e o repository. Regras de negócio: RN-02; Documento Técnico seção 4. Pasta alvo: api/.",
+   "done_criteria": "- Schema em src/modules/projects/prisma/projects.prisma.\n- Repository atrás de interface com criar, buscar por uuid e apagar.\n- Identificadores externos são uuid.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a2"
+   ]
+  },
+  {
+   "key": "pr2",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar POST /v1/projects com token privado",
+   "objective": "Criar o projeto devolvendo id, token aleatório de 256 bits (uma única vez) e o tamanho da parte do upload; guardar só o hash SHA-256 do token e o hash do IP. Regras de negócio: RN-01.2, RN-02.1. Pasta alvo: api/.",
+   "done_criteria": "- O token nunca é guardado nem registrado em log.\n- A resposta traz id, token e partSize.\n- Documentado no Swagger e em docs/API - Projects.md.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr1"
+   ]
+  },
+  {
+   "key": "pr3",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o guard de token do projeto",
+   "objective": "Criar o guard que exige Authorization Bearer, compara o hash em tempo constante e expõe o projeto à rota por um decorator. Regras de negócio: RN-02.1; Documento Técnico 11.1 e 14. Pasta alvo: api/.",
+   "done_criteria": "- Rota sem token ou com token inválido devolve 401 com code.\n- A comparação é em tempo constante.\n- O token do projeto nunca aparece em log.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr2"
+   ]
+  },
+  {
+   "key": "pr4",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar GET /v1/config e GET /v1/projects/:id",
+   "objective": "Devolver os limites vigentes lidos do ambiente e o estado do projeto: status, etapa, progresso, metadados e tempo restante de retenção. Regras de negócio: RN-01.3, RN-02.4, RN-03.1. Pasta alvo: api/.",
+   "done_criteria": "- GET /config traz tamanho máximo, duração máxima, retenção, exportações e análises.\n- GET /projects/:id traz o tempo restante até expirar.\n- Projeto expirado devolve o code de projeto expirado.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr3"
+   ]
+  },
+  {
+   "key": "pr5",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o upload em partes",
+   "objective": "Criar PUT /projects/:id/upload/:index e GET /projects/:id/upload gravando as partes em /data/projects/{id}/upload, com validação de índice e tamanho e proteção contra path traversal. Regras de negócio: RN-01.7; Documento Técnico 5. Pasta alvo: api/.",
+   "done_criteria": "- GET devolve as partes já recebidas para retomar.\n- Parte repetida é idempotente.\n- Nenhum caminho vindo do cliente é usado no disco sem validação.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr3"
+   ]
+  },
+  {
+   "key": "pr6",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar POST /upload/complete que junta as partes e inicia o processamento",
+   "objective": "Juntar as partes em original.<ext>, apagar as partes, criar o job process, mudar o status para PROCESSING e recusar o envio se o espaço livre estiver abaixo de MIN_FREE_DISK_GB. Regras de negócio: RN-01, RN-03; Documento Técnico 5. Pasta alvo: api/.",
+   "done_criteria": "- O original fica íntegro e as partes são apagadas.\n- O job process é criado ao concluir.\n- Disco baixo devolve o code de muita demanda.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr5",
+    "j1"
+   ]
+  },
+  {
+   "key": "pr7",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar DELETE /v1/projects/:id para descartar o projeto",
+   "objective": "Apagar a pasta e todos os registros do projeto na hora e permitir cancelar o envio descartando o que já foi recebido. Regras de negócio: RN-01.6, RN-02.5. Pasta alvo: api/.",
+   "done_criteria": "- A exclusão é imediata e definitiva.\n- Cancelar o envio descarta as partes.\n- Projeto apagado devolve 404 nas consultas seguintes.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr3"
+   ]
+  },
+  {
+   "key": "pr8",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o cron de expiração de projetos",
+   "objective": "Criar a rotina a cada 15 minutos que apaga a pasta e os registros dos projetos com expires_at vencido, e o estado EXPIRED na consulta. Regras de negócio: RN-02.3, RN-02.8. Pasta alvo: api/.",
+   "done_criteria": "- Projeto vencido some do disco e do banco.\n- A consulta de um projeto vencido devolve o code de expirado.\n- A rotina é idempotente e não derruba a API.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr1",
+    "pr7"
+   ]
+  },
+  {
+   "key": "pc1",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o módulo transcript com schema e repository",
+   "objective": "Criar o módulo transcript com o schema da tabela transcripts (words, sentences e pauses em JSON) e o repository. Regras de negócio: RN-04; Documento Técnico seção 4. Pasta alvo: api/.",
+   "done_criteria": "- Schema em src/modules/transcript/prisma/transcript.prisma.\n- Repository atrás de interface.\n- Palavras guardam i, w, s, e, sp, f.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr1"
+   ]
+  },
+  {
+   "key": "pc2",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o job process com as quatro primeiras etapas",
+   "objective": "Executar checking, extracting_audio, preparing_preview e analyzing_audio em sequência, atualizando o step, e permitir retomar a partir da etapa que falhou. Regras de negócio: RN-03.1, RN-03.4, RN-03.5; Documento Técnico 7. Pasta alvo: api/.",
+   "done_criteria": "- Cada etapa atualiza step e progresso.\n- Uma falha guarda a etapa e o code do erro.\n- A nova tentativa recomeça da etapa que falhou sem refazer as anteriores.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "j2",
+    "f2",
+    "f3",
+    "f6",
+    "pr6"
+   ]
+  },
+  {
+   "key": "pc3",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Executar a etapa de transcrição no job process",
+   "objective": "Chamar a transcrição em pedaços, gravar as palavras, marcar has_speech e low_quality (idioma e confiança). Regras de negócio: RN-04.8, RN-04.9; Documento Técnico 7.1. Pasta alvo: api/.",
+   "done_criteria": "- As palavras ficam gravadas com início e fim.\n- Sem fala marca has_speech falso.\n- Baixa confiança marca low_quality.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pc2",
+    "f5",
+    "pc1"
+   ]
+  },
+  {
+   "key": "pc4",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Montar frases numeradas e parágrafos a partir das palavras",
+   "objective": "Gerar sentences numeradas (quebra por pontuação, travessão e reticências) e agrupar parágrafos por mudança de assunto ou pausa longa, como função pura. Regras de negócio: RN-04.3; Documento Técnico 9. Pasta alvo: api/.",
+   "done_criteria": "- Frases têm id, primeira e última palavra e tempos.\n- Falsos começos viram frases próprias.\n- A função é pura e coberta por casos de borda.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pc3"
+   ]
+  },
+  {
+   "key": "pc5",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Detectar pausas e marcar hesitações e muletas",
+   "objective": "Calcular as pausas de 300 ms ou mais e marcar hes e mul pelas regras do documento técnico, como funções puras. O é verbo nunca é hesitação. Regras de negócio: RN-04.7, RN-05.8, RN-05.9, RN-05.10; Documento Técnico 7.2. Pasta alvo: api/.",
+   "done_criteria": "- Pausas conferem com o silencedetect.\n- hum, hã, ahn e é alongado isolado são hes.\n- né, tipo, então, aí e sabe são só mul.\n- O verbo é nunca é marcado.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pc3"
+   ]
+  },
+  {
+   "key": "pc6",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Identificar quem fala na transcrição",
+   "objective": "Fazer a segunda passada com OPENAI_DIARIZE_MODEL e atribuir o falante a cada palavra pelo tempo, com fallback para um único falante. Regras de negócio: RN-04.4; Documento Técnico 7.1. Pasta alvo: api/.",
+   "done_criteria": "- Cada palavra recebe sp.\n- Gravação de uma pessoa fica com um falante.\n- Falha da diarização não derruba o processamento.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pc3"
+   ]
+  },
+  {
+   "key": "pc7",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar a consulta e a correção da transcrição",
+   "objective": "Criar GET /transcript e PATCH /transcript que corrige palavras [{i, w}] mudando só o texto, nunca o tempo, e renomeia falantes. Regras de negócio: RN-04.4, RN-04.5, RN-04.6. Pasta alvo: api/.",
+   "done_criteria": "- Corrigir palavra não altera início nem fim.\n- Não é possível acrescentar palavras que não existem no áudio.\n- Renomear Pessoa 1 reflete em todas as palavras.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pc1",
+    "pr3"
+   ]
+  },
+  {
+   "key": "pc8",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar POST /retry e o download da transcrição em texto",
+   "objective": "Criar POST /projects/:id/retry que refaz só a etapa que falhou e o endpoint que devolve a transcrição como texto simples. Regras de negócio: RN-03.4, RN-04.10. Pasta alvo: api/.",
+   "done_criteria": "- Retry cria job a partir da etapa que falhou.\n- O texto baixado tem os falantes e as palavras corrigidas.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pc2",
+    "pc7"
+   ]
+  },
+  {
+   "key": "fl1",
+   "epic": "Tempo real e arquivos",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Entregar arquivos por URL assinada com suporte a Range",
+   "objective": "Criar GET /v1/files/:id/:name?exp=&sig= com assinatura HMAC e prazo de 1 hora, e suporte a Range para o player buscar qualquer ponto. Regras de negócio: RN-12.5; Documento Técnico 5 e 14. Pasta alvo: api/.",
+   "done_criteria": "- Assinatura inválida ou vencida devolve 403.\n- Requisição Range devolve 206.\n- O nome do arquivo não permite sair da pasta do projeto.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr3"
+   ]
+  },
+  {
+   "key": "e1",
+   "epic": "Tempo real e arquivos",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Publicar eventos de progresso do worker para a API",
+   "objective": "Criar o serviço de eventos em memória (RxJS Subject), o endpoint interno POST /internal/events protegido por segredo compartilhado e a publicação de step e progresso pelo worker. Regras de negócio: RN-03.1; Documento Técnico 12. Pasta alvo: api/.",
+   "done_criteria": "- O endpoint interno recusa chamadas sem o segredo.\n- O worker publica project.state e processing.progress.\n- O endpoint não aparece no Swagger público.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "j2",
+    "pr3"
+   ]
+  },
+  {
+   "key": "e2",
+   "epic": "Tempo real e arquivos",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o stream SSE do projeto",
+   "objective": "Criar GET /projects/:id/events com heartbeat de 20 s, Last-Event-ID, estado atual na reconexão e releitura do banco a cada 5 s como rede de segurança. Regras de negócio: RN-03.1, RN-12.7; Documento Técnico 12. Pasta alvo: api/.",
+   "done_criteria": "- O cliente recebe os eventos só do seu projeto.\n- Na reconexão chega o estado atual antes do fluxo.\n- Evento perdido é recuperado pela releitura a cada 5 s.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "e1"
+   ]
+  },
+  {
+   "key": "up1",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o módulo project do app com armazenamento do token",
+   "objective": "Criar o módulo project (api, types, queries, mutations e storage) para criar, consultar e descartar projetos e guardar o token no SecureStore ou localStorage, com a lista Continuar editando. Regras de negócio: RN-02.2; Documento Técnico 13.3. Pasta alvo: app/.",
+   "done_criteria": "- O token fica em armazenamento seguro no nativo e em localStorage na web.\n- A lista Continuar editando mostra projetos do aparelho.\n- O app só consome o que a API devolve.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "m4",
+    "pr4"
+   ]
+  },
+  {
+   "key": "up2",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar a tela inicial de envio",
+   "objective": "Criar a tela inicial a partir do Upload.dc.html com chamada para escolher o vídeo, aviso de privacidade em uma linha, formatos e limites vindos de GET /config e a lista Continuar editando. Regras de negócio: RN-01.8, RN-02.2. Pasta alvo: app/.",
+   "done_criteria": "- Reproduz o Upload.dc.html no celular e na tela larga.\n- Limites mostrados vêm de GET /config.\n- Mostra Seu vídeo é privado e será apagado automaticamente em 24 horas.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up1",
+    "m5"
+   ]
+  },
+  {
+   "key": "up3",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar a leitura do arquivo em partes e o hook useUpload",
+   "objective": "Ler o arquivo em partes de 8 MB (nativo com expo-file-system e web com File.slice) e enviar até 3 partes em paralelo, com progresso, percentual e cancelar. Regras de negócio: RN-01.1, RN-01.6. Pasta alvo: app/.",
+   "done_criteria": "- Envia até 3 partes ao mesmo tempo.\n- Cancelar interrompe o envio e descarta o projeto.\n- O progresso mostra percentual e tempo estimado.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up1",
+    "pr5"
+   ]
+  },
+  {
+   "key": "up4",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Retomar o upload e permitir arrastar e soltar na web",
+   "objective": "Guardar as partes concluídas para retomar de onde parou, oferecer Tentar novamente e aceitar arrastar e soltar o vídeo na web. Regras de negócio: RN-01.7; seção 9 do documento de regras. Pasta alvo: app/.",
+   "done_criteria": "- Com a conexão caída o envio retoma da última parte concluída.\n- Arrastar e soltar funciona na web em arquivo .web.tsx.\n- Mensagem A conexão caiu aparece durante a retomada.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up3"
+   ]
+  },
+  {
+   "key": "e3",
+   "epic": "Tempo real e arquivos",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o cliente de tempo real do app",
+   "objective": "Criar events.client.ts (react-native-sse) e events.client.web.ts (fetch-event-source) que atualizam o React Query a partir dos eventos do SSE, com reconexão. Regras de negócio: RN-03.1; Documento Técnico 12 e 13.3. Pasta alvo: app/.",
+   "done_criteria": "- Evento de progresso atualiza a tela sem recarregar.\n- Reconexão reenvia Last-Event-ID.\n- Ao reconectar o app refaz GET /projects/:id.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up1",
+    "e2"
+   ]
+  },
+  {
+   "key": "up5",
+   "epic": "Processamento e transcrição",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar a tela de processamento",
+   "objective": "Criar a tela de processamento a partir do Processando.dc.html com as etapas e o status de cada uma, tempo estimado, possibilidade de sair e voltar e botão Tentar novamente. Regras de negócio: RN-03.1, RN-03.2, RN-03.4. Pasta alvo: app/.",
+   "done_criteria": "- Mostra aguardando, em andamento e concluída por etapa.\n- Falha mostra a mensagem do code e Tentar novamente.\n- Sair e voltar pelo link retoma o acompanhamento.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up1",
+    "m5",
+    "e3"
+   ]
+  },
+  {
+   "key": "up6",
+   "epic": "Projeto e upload",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Mostrar retenção, expiração e descarte do projeto",
+   "objective": "Mostrar o tempo restante, o aviso para não compartilhar o link, a tela de projeto expirado com Começar novo projeto, o botão Descartar projeto com confirmação e o aviso ao fechar a aba na web. Regras de negócio: RN-02.4 a RN-02.9. Pasta alvo: app/.",
+   "done_criteria": "- Mostra Este projeto expira em N h.\n- Descartar pede confirmação e apaga na hora.\n- O aviso ao fechar a aba existe só na web.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up1"
+   ]
+  },
+  {
+   "key": "pl1",
+   "epic": "Revisão e player",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar o hook useEditorPlayer com expo-video",
+   "objective": "Criar o useEditorPlayer que toca o proxy.mp4 por URL assinada com play, pausa, busca e tempo atual, ainda sem pular cortes. Regras de negócio: RN-11; Documento Técnico 13.3. Pasta alvo: app/.",
+   "done_criteria": "- Toca o proxy.mp4 no celular e na web.\n- Expõe tempo atual e seek por palavra.\n- Renova a URL assinada quando vence.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up1",
+    "fl1"
+   ]
+  },
+  {
+   "key": "tr1",
+   "epic": "Revisão e player",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Criar a lista de transcrição por frase",
+   "objective": "Criar o módulo transcript do app com lista virtualizada por frase, falante, hesitações e muletas destacadas e clique na palavra levando o player ao tempo, com destaque da palavra falada. Regras de negócio: RN-04.2, RN-04.7; Documento Técnico 13.3. Pasta alvo: app/.",
+   "done_criteria": "- Clicar numa palavra leva o vídeo àquele momento.\n- A palavra falada fica destacada durante a reprodução.\n- A lista de 18 mil palavras rola sem travar.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up1",
+    "pl1",
+    "pc7"
+   ]
+  },
+  {
+   "key": "tr2",
+   "epic": "Revisão e player",
+   "milestone": "F2 Projeto, upload e transcrição",
+   "sprint": "F2 Projeto, upload e transcrição",
+   "title": "Permitir corrigir palavra, renomear falante e baixar a transcrição",
+   "objective": "Criar a ação Corrigir texto (muda só o que está escrito), renomear Pessoa 1 e o download da transcrição em texto. Regras de negócio: RN-04.4, RN-04.5, RN-04.10, RN-06.5. Pasta alvo: app/.",
+   "done_criteria": "- Corrigir palavra não mexe no vídeo.\n- A correção aparece na transcrição e nas legendas futuras.\n- Baixar entrega o texto com os falantes.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "tr1",
+    "pc8"
+   ]
+  },
+  {
+   "key": "t1",
+   "epic": "Timeline e edição",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Calcular os cortes de pausa por nível de sensibilidade",
+   "objective": "Criar a função pura que, dadas palavras, pausas e o nível (Suave, Equilibrado ou Agressivo), gera os cortes mantendo o respiro, removendo as pausas do início e do fim e nunca cortando dentro de uma palavra. Regras de negócio: RN-05.1, RN-05.2, RN-05.3; Documento Técnico 8. Pasta alvo: api/.",
+   "done_criteria": "- Equilibrado corta pausas acima de 700 ms com respiro de 200 ms.\n- Suave usa 1200 ms e 300 ms e Agressivo 400 ms e 100 ms.\n- Nenhum corte cai no meio de uma palavra.\n- Pausas no início e no fim são removidas.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pc5"
+   ]
+  },
+  {
+   "key": "t2",
+   "epic": "Timeline e edição",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Combinar cortes, proteger trechos restaurados e limpar fragmentos",
+   "objective": "Criar as funções puras que unem os cortes de todas as origens, subtraem os trechos protegidos, ajustam as bordas para fora das palavras e limpam fragmentos menores que 150 ms mantidos ou cortes menores que 100 ms. Regras de negócio: RC-01, RC-02, RC-03, RN-06.7; Documento Técnico 8. Pasta alvo: api/.",
+   "done_criteria": "- Cortes de origens diferentes se somam pela união.\n- Trecho protegido nunca é cortado por pausa, hesitação ou IA.\n- Corte manual novo sobre trecho protegido remove a proteção daquele intervalo.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "t1"
+   ]
+  },
+  {
+   "key": "t3",
+   "epic": "Timeline e edição",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Montar o resultado da timeline com origens e estatísticas",
+   "objective": "Criar a função pura e o DTO que devolvem cuts com origem, kept, outDurationMs e estatísticas por origem. Regras de negócio: RN-05.5, RP-04; Documento Técnico 8. Pasta alvo: api/.",
+   "done_criteria": "- Resultado traz cuts, kept, duração final e estatísticas por origem.\n- Mostra, por exemplo, 38 pausas cortadas e 6 min 12 s economizados.\n- Cobertura de testes das funções puras fica para a etapa de testes.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "t2"
+   ]
+  },
+  {
+   "key": "t4",
+   "epic": "Timeline e edição",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar o módulo editing com schema e PUT /settings",
+   "objective": "Criar o módulo editing com o schema de settings, manual_cuts, protected_ranges e history_cursor, o repository e o PUT /settings que recalcula e devolve a timeline. Regras de negócio: RN-05.4, RP-02, RP-05, RC-04, RC-05. Pasta alvo: api/.",
+   "done_criteria": "- Mudar o nível de pausa recalcula só os cortes de pausa e preserva decisões manuais.\n- Desmarcar uma ferramenta remove só os cortes daquela origem.\n- A resposta já traz a timeline recalculada.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "t3",
+    "pr1"
+   ]
+  },
+  {
+   "key": "t5",
+   "epic": "Timeline e edição",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar POST /cuts para cortes manuais",
+   "objective": "Criar o corte manual por palavras (ajustando ao início da primeira e ao fim da última) e por intervalo de tempo, com origem Manual, devolvendo a timeline. Regras de negócio: RN-06.3, RN-06.4, RN-06.6. Pasta alvo: api/.",
+   "done_criteria": "- Selecionar uma frase corta exatamente aquela frase.\n- Não existe corte de meia palavra.\n- Corte por intervalo de tempo funciona em trecho sem fala.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "t4"
+   ]
+  },
+  {
+   "key": "t6",
+   "epic": "Timeline e edição",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar POST /restore para restaurar trechos e proteger",
+   "objective": "Restaurar um trecho de qualquer origem tornando-o protegido, e restaurar todos os cortes de uma origem, devolvendo a timeline. Regras de negócio: RN-05.6, RN-06.7, RN-11.2, RN-11.4. Pasta alvo: api/.",
+   "done_criteria": "- Trecho restaurado não é cortado de novo ao reprocessar pausas.\n- Restaurar todas as pausas não afeta cortes de outras origens.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "t4"
+   ]
+  },
+  {
+   "key": "t7",
+   "epic": "Timeline e edição",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar desfazer e refazer no servidor",
+   "objective": "Gravar uma foto do estado de edição em project_history a cada ação (máximo de 100) e criar POST /undo e /redo devolvendo a timeline. Regras de negócio: RN-11.3. Pasta alvo: api/.",
+   "done_criteria": "- Desfazer reverte a última ação, qualquer que seja.\n- Refazer avança a foto.\n- O histórico guarda no máximo 100 fotos.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "t4"
+   ]
+  },
+  {
+   "key": "t8",
+   "epic": "Timeline e edição",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar GET /timeline e o resumo de duração",
+   "objective": "Criar GET /timeline e incluir o resumo Duração original → Duração final no GET /projects/:id. Regras de negócio: RP-04, RN-11.5. Pasta alvo: api/.",
+   "done_criteria": "- O resumo mostra original, final e a diferença.\n- GET /timeline devolve o mesmo cálculo das ações de edição.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 1,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "t3",
+    "t4"
+   ]
+  },
+  {
+   "key": "x1",
+   "epic": "Exportação",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar o módulo exports e POST /exports com validações",
+   "objective": "Criar o módulo exports com schema e repository e o POST /exports que valida pelo menos um formato, vídeo final de 3 s ou mais e o limite de exportações, criando um job por formato. Regras de negócio: RP-01, RN-12.11, RN-12.9; Documento Técnico 10.4. Pasta alvo: api/.",
+   "done_criteria": "- Sem formato devolve o code de nenhum formato marcado.\n- Vídeo final menor que 3 s devolve o code de vídeo curto.\n- Cada formato gera um job de exportação.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "t4",
+    "j1"
+   ]
+  },
+  {
+   "key": "x2",
+   "epic": "Exportação",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Montar o comando de exportação horizontal com áudio e cortes",
+   "objective": "Montar o comando do formato horizontal a partir de kept, com micro-fade de 10 ms em cada corte, mantendo a imagem quando o original já é horizontal e limitando em 1080p. Regras de negócio: RN-10.2, RN-12.1; Documento Técnico 10.2 e 10.4. Pasta alvo: api/.",
+   "done_criteria": "- O arquivo final tem a duração de kept.\n- Não há estalos nos cortes.\n- Original já horizontal não tem a imagem alterada.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "f7",
+    "t3"
+   ]
+  },
+  {
+   "key": "x3",
+   "epic": "Exportação",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar o job de exportação com progresso e cancelamento",
+   "objective": "Executar o comando, atualizar progresso e step, nomear o arquivo como nome-original_editado_horizontal.mp4, classificar falhas por code e permitir cancelar. Regras de negócio: RN-12.4, RN-12.7, RN-12.8. Pasta alvo: api/.",
+   "done_criteria": "- O arquivo segue o padrão de nome.\n- O progresso chega pelo SSE.\n- Cancelar mata o FFmpeg e marca canceled.\n- Falha mantém as edições salvas.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "x1",
+    "x2",
+    "j2"
+   ]
+  },
+  {
+   "key": "x4",
+   "epic": "Exportação",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar GET e DELETE de exportações com links assinados",
+   "objective": "Criar GET /exports com status, progresso e links assinados, DELETE /exports/:id para cancelar e substituir a exportação anterior do mesmo formato, e o download da transcrição em texto. Regras de negócio: RN-12.5, RN-12.6, RN-12.9, RN-12.10. Pasta alvo: api/.",
+   "done_criteria": "- Nova exportação substitui a anterior do mesmo formato.\n- Links são assinados e com prazo.\n- Cancelar devolve o estado atualizado.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "x3",
+    "fl1"
+   ]
+  },
+  {
+   "key": "ed1",
+   "epic": "Revisão e player",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar o Painel de Ferramentas com resumo de duração",
+   "objective": "Criar o painel a partir do Edicao.dc.html com as ferramentas, descrições e padrões do documento de regras, o resumo Duração original → final e o bloqueio das ferramentas que dependem de fala. Regras de negócio: RP-01 a RP-05, RN-04.8. Pasta alvo: app/.",
+   "done_criteria": "- Padrões iguais aos da seção 4.3 do documento de regras.\n- Sem fala detectada as ferramentas dependentes ficam desativadas com o motivo.\n- O resumo de duração fica sempre visível.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up1",
+    "m5",
+    "t8"
+   ]
+  },
+  {
+   "key": "ed2",
+   "epic": "Revisão e player",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar o módulo timeline do app com queries e mutations",
+   "objective": "Criar as queries e mutations de timeline, configurações, cortar, restaurar, desfazer e refazer, sempre redesenhando a tela com a resposta da API. Regras de negócio: RN-02.7, RN-11.3; Documento Técnico 13.4. Pasta alvo: app/.",
+   "done_criteria": "- Toda ação de edição é uma chamada que devolve a timeline.\n- O app não calcula cortes nem durações.\n- Erros mostram a mensagem do code.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed1",
+    "t5",
+    "t6",
+    "t7"
+   ]
+  },
+  {
+   "key": "ed3",
+   "epic": "Revisão e player",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar a linha do tempo com forma de onda e cortes por origem",
+   "objective": "Desenhar com react-native-svg a forma de onda e os cortes coloridos por origem, com filtro por origem, clique no corte mostrando origem e duração e o botão Restaurar. Regras de negócio: RN-11.2, RN-11.4. Pasta alvo: app/.",
+   "done_criteria": "- Cada origem tem uma cor diferente.\n- Clicar no corte mostra origem, duração e Restaurar.\n- Há filtro por Pausa, Hesitação, IA e Manual.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed2"
+   ]
+  },
+  {
+   "key": "ed4",
+   "epic": "Revisão e player",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Fazer o player pular os trechos cortados e alternar Original e Resultado final",
+   "objective": "Fazer o player, no modo Resultado final, pular de forma contínua os trechos fora de kept e permitir alternar com o Original. Regras de negócio: RN-11.1, RN-11.6. Pasta alvo: app/.",
+   "done_criteria": "- O resultado final toca sem os trechos cortados.\n- Alternar para Original toca o vídeo inteiro.\n- A troca mantém a posição equivalente.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "pl1",
+    "ed2"
+   ]
+  },
+  {
+   "key": "ed5",
+   "epic": "Revisão e player",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar a edição pelo texto com Cortar trecho e Restaurar",
+   "objective": "Permitir selecionar palavras na transcrição e Cortar trecho (ou a tecla apagar), mostrar o texto riscado e esmaecido e oferecer Restaurar, com a seleção ajustada às palavras. Regras de negócio: RN-06.1, RN-06.2, RN-06.4, RN-06.5. Pasta alvo: app/.",
+   "done_criteria": "- O trecho cortado fica riscado e pode ser restaurado.\n- A seleção sempre começa e termina em palavras inteiras.\n- Corrigir texto e Cortar trecho são ações claramente diferentes.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "tr1",
+    "ed2"
+   ]
+  },
+  {
+   "key": "ed6",
+   "epic": "Revisão e player",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar o corte pela linha do tempo e os atalhos de desfazer",
+   "objective": "Permitir selecionar um intervalo na linha do tempo e Cortar trecho, e expor Desfazer e Refazer na barra com atalhos de teclado na web. Regras de negócio: RN-06.6, RN-11.3. Pasta alvo: app/.",
+   "done_criteria": "- Corte por intervalo funciona em trecho sem fala.\n- Desfazer e Refazer funcionam para qualquer ação.\n- Atalhos de teclado existem só na web (.web.tsx).",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed3"
+   ]
+  },
+  {
+   "key": "ed7",
+   "epic": "Revisão e player",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar os controles de pausas e hesitações",
+   "objective": "Criar o nível Suave, Equilibrado ou Agressivo, a subopção Remover hesitações e o resultado 38 pausas cortadas, 6 min 12 s economizados, com a explicação sobre silêncio com algo acontecendo na imagem. Regras de negócio: RN-05.4, RN-05.5, RN-05.7, RN-05.11. Pasta alvo: app/.",
+   "done_criteria": "- Trocar de nível preserva restaurações manuais.\n- Remover hesitações mostra quantas foram removidas.\n- A tela de ajuda explica a limitação de silêncio relevante na imagem.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed1"
+   ]
+  },
+  {
+   "key": "ed8",
+   "epic": "Revisão e player",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar o layout da tela de edição em 3 colunas e abas",
+   "objective": "Montar a tela de edição com 3 colunas na tela larga (texto, player e painel) e abas no celular (Vídeo, Texto, Linha do tempo e IA) usando useIsMobile e useIsNarrow. Regras de negócio: RN-11; Documento Técnico 13.3. Pasta alvo: app/.",
+   "done_criteria": "- Tela larga mostra texto, player e painel lado a lado.\n- No celular as abas Vídeo, Texto, Linha do tempo e IA alternam o conteúdo.\n- Reproduz o Edicao.dc.html.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed1",
+    "ed3",
+    "tr1"
+   ]
+  },
+  {
+   "key": "ex1",
+   "epic": "Exportação",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar a tela de exportação com resumo e acompanhamento",
+   "objective": "Criar a tela de exportação com o resumo (ferramentas, cortes por origem, duração e formatos), o aviso de sugestões da IA não revisadas, confirmar, progresso, tempo estimado e cancelar. Regras de negócio: RN-12, RN-12.8. Pasta alvo: app/.",
+   "done_criteria": "- O resumo mostra o que será aplicado.\n- Existem sugestões não revisadas mostra o aviso de que não serão aplicadas.\n- O progresso chega pelo SSE e dá para cancelar.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed2",
+    "e3",
+    "x4"
+   ]
+  },
+  {
+   "key": "ex2",
+   "epic": "Exportação",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar a tela de concluído com downloads",
+   "objective": "Criar a tela de concluído a partir do Concluido.dc.html com download por formato, transcrição, voltar a editar e, no nativo, salvar na galeria e compartilhar. Regras de negócio: RN-12.5, RN-12.7, RN-12.9, RN-12.12. Pasta alvo: app/.",
+   "done_criteria": "- Cada arquivo tem seu botão de download.\n- No nativo salva na galeria com expo-media-library.\n- Voltar a editar mantém todas as escolhas.",
+   "task_type": "Funcionalidade",
+   "priority": "Alta",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ex1"
+   ]
+  },
+  {
+   "key": "ex3",
+   "epic": "Exportação",
+   "milestone": "F3 Timeline, cortes e exportação",
+   "sprint": "F3 Timeline, cortes e exportação",
+   "title": "Criar o fluxo expresso Editar e exportar",
+   "objective": "Criar o botão Editar e exportar que, com as ferramentas nos padrões, exporta sem revisão, levando à revisão das sugestões quando a IA estiver marcada. Regras de negócio: Seção 4.2 do documento de regras. Pasta alvo: app/.",
+   "done_criteria": "- Com padrões marcados exporta direto.\n- Com IA marcada leva à revisão das sugestões antes de exportar.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ex1"
+   ]
+  },
+  {
+   "key": "l1",
+   "epic": "Legendas",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Gerar os blocos de legenda a partir do resultado da timeline",
+   "objective": "Criar a função pura que monta os blocos de legenda a partir das palavras corrigidas, sem trechos cortados e sem hesitações, com tempos convertidos para o vídeo final e limites de duração, sem atravessar troca de falante nem corte. Regras de negócio: RN-08.1, RN-08.2, RN-08.3, RN-08.6, RN-08.7. Pasta alvo: api/.",
+   "done_criteria": "- Nenhum texto de trecho cortado aparece.\n- Bloco no horizontal tem de 1 s a 6 s e no vertical de 0,7 s a 3 s.\n- Bloco nunca atravessa corte ou troca de falante.\n- O bloco some quando a fala termina.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "t3"
+   ]
+  },
+  {
+   "key": "l2",
+   "epic": "Legendas",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Quebrar o texto das legendas em linhas de leitura natural",
+   "objective": "Criar a função pura que quebra o texto em até 2 linhas de 42 caracteres no horizontal e 22 no vertical, sem separar artigo do substantivo, preposição do complemento nem nomes compostos, preferindo pontuação. Regras de negócio: RN-08.5, tabela de quebra do RN-08. Pasta alvo: api/.",
+   "done_criteria": "- Máximo de 2 linhas por bloco.\n- Limites de 42 e 22 caracteres respeitados.\n- Não separa o / carro nem preposição do complemento.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "l1"
+   ]
+  },
+  {
+   "key": "l3",
+   "epic": "Legendas",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Criar GET /subtitles e as opções de estilo em settings",
+   "objective": "Criar GET /subtitles?format= com os blocos para o preview e guardar em settings o estilo (Clássico, Palavra em destaque ou Caixa), o tamanho P, M ou G, a posição e a cor de destaque. Regras de negócio: RN-08.8 a RN-08.11. Pasta alvo: api/.",
+   "done_criteria": "- Os blocos devolvidos são os mesmos do render.\n- Padrões: Clássico no horizontal e Palavra em destaque no vertical.\n- Só as personalizações da v1 são aceitas.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "l2",
+    "t4"
+   ]
+  },
+  {
+   "key": "l4",
+   "epic": "Legendas",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Gerar o arquivo ASS dos três estilos de legenda",
+   "objective": "Gerar o ASS dos estilos Clássico, Caixa e Palavra em destaque (um evento por palavra) com a fonte Inter, tamanho, posição e cor de destaque. Regras de negócio: RN-08; Documento Técnico 10.1. Pasta alvo: api/.",
+   "done_criteria": "- Cada estilo gera um ASS válido.\n- Palavra em destaque troca a cor da palavra falada.\n- A fonte Inter vem da pasta fonts/.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "l1"
+   ]
+  },
+  {
+   "key": "l5",
+   "epic": "Legendas",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Gravar a legenda no vídeo exportado e gerar o SRT",
+   "objective": "Aplicar o filtro subtitles na exportação e gerar o SRT opcional dos mesmos blocos, sincronizado com o vídeo final. Regras de negócio: RN-08.12, RN-08.13. Pasta alvo: api/.",
+   "done_criteria": "- A legenda acompanha a fala mesmo depois de dezenas de cortes.\n- O SRT usa os mesmos blocos.\n- Sem legendas marcada nada é gravado na imagem.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "l4",
+    "x2"
+   ]
+  },
+  {
+   "key": "au1",
+   "epic": "Áudio",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Aplicar nivelamento e aumento de volume com proteção contra distorção",
+   "objective": "Montar a cadeia de áudio com loudnorm em -16 LUFS (usando a medição do processamento), volume de +25, +50 ou +100 por cento e alimiter por último, avisando quando o aumento for limitado. Regras de negócio: RN-09.1 a RN-09.5; Documento Técnico 10.2. Pasta alvo: api/.",
+   "done_criteria": "- Vozes em volumes diferentes ficam parecidas.\n- Nenhuma combinação distorce o som.\n- Quando limitado, devolve o aviso Aumentamos o máximo possível sem distorcer o som.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "x2",
+    "f6"
+   ]
+  },
+  {
+   "key": "au2",
+   "epic": "Áudio",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Criar a amostra de áudio Original e Com ajuste",
+   "objective": "Criar o job audio_sample e POST /audio-sample que geram 20 s de um trecho com fala nas versões Original e Com ajuste. Regras de negócio: RN-09.6. Pasta alvo: api/.",
+   "done_criteria": "- Gera duas amostras do mesmo trecho.\n- A amostra é de um trecho com fala.\n- Links assinados devolvidos pelo SSE e pela consulta.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "au1",
+    "j2"
+   ]
+  },
+  {
+   "key": "v1",
+   "epic": "Formato vertical",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Enquadrar o vídeo vertical com corte, faixas e posição ajustável",
+   "objective": "Montar o enquadramento: horizontal para vertical com crop 9:16 na posição escolhida (0 a 1) e scale 1080x1920, vertical para horizontal com faixas pretas e mesmo formato apenas limitando em 1080p. Regras de negócio: RN-10.1 a RN-10.10; Documento Técnico 10.3. Pasta alvo: api/.",
+   "done_criteria": "- Posição 0, 0,5 e 1 recortam esquerda, centro e direita.\n- Original vertical exportado como horizontal não perde imagem.\n- Original quadrado segue as regras de corte e faixas.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "x2"
+   ]
+  },
+  {
+   "key": "v2",
+   "epic": "Formato vertical",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Exportar os dois formatos com a legenda adaptada",
+   "objective": "Gerar dois arquivos com as mesmas edições, cada um com a legenda do seu formato e a legenda vertical dentro da área segura. Regras de negócio: RN-10.1, RN-08.14, RN-12.4. Pasta alvo: api/.",
+   "done_criteria": "- Escolher os dois formatos gera dois arquivos com os mesmos cortes.\n- A legenda vertical fica fora da faixa inferior e da lateral direita.\n- Cada arquivo tem o nome do seu formato.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "v1",
+    "l5",
+    "x4"
+   ]
+  },
+  {
+   "key": "ls1",
+   "epic": "Legendas",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Criar a escolha de estilo e personalização da legenda",
+   "objective": "Criar o controle de Legendas automáticas com estilo, tamanho P, M ou G, posição e cor de destaque. Regras de negócio: RN-08.8 a RN-08.11. Pasta alvo: app/.",
+   "done_criteria": "- Só as opções da v1 aparecem.\n- A escolha é salva automaticamente.\n- O padrão depende do formato.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed1",
+    "l3"
+   ]
+  },
+  {
+   "key": "ls2",
+   "epic": "Legendas",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Criar o SubtitleOverlay e a edição do texto da legenda",
+   "objective": "Desenhar os blocos de legenda sobre o player com a mesma fonte e permitir editar o texto de um bloco, o que equivale a corrigir a transcrição. Regras de negócio: RN-08.2, RN-08.4. Pasta alvo: app/.",
+   "done_criteria": "- A legenda no preview é igual à exportada.\n- Editar um bloco corrige a transcrição.\n- Trechos cortados não aparecem.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed4",
+    "l3"
+   ]
+  },
+  {
+   "key": "au3",
+   "epic": "Áudio",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Criar os controles de volume com comparação Original e Com ajuste",
+   "objective": "Criar Nivelar volume, Aumentar volume (+25, +50 ou +100) e o botão para ouvir a amostra alternando Original e Com ajuste. Regras de negócio: RN-09.3, RN-09.4, RN-09.5, RN-09.6. Pasta alvo: app/.",
+   "done_criteria": "- O padrão de Aumentar é +50 por cento.\n- Dá para alternar Original e Com ajuste.\n- Mostra o aviso quando o volume foi limitado.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed1",
+    "au2"
+   ]
+  },
+  {
+   "key": "vf1",
+   "epic": "Formato vertical",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Criar a seleção de formatos e o preview Horizontal e Vertical",
+   "objective": "Criar a escolha de formato horizontal e/ou vertical no painel, a validação de pelo menos um formato e a alternância do preview entre os dois. Regras de negócio: RP-01, RN-10.1, RN-11.7. Pasta alvo: app/.",
+   "done_criteria": "- Sem formato marcado aparece a mensagem de escolher um formato.\n- Com os dois marcados dá para alternar o preview.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed1"
+   ]
+  },
+  {
+   "key": "vf2",
+   "epic": "Formato vertical",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Criar o FramingOverlay com quadro 9:16 arrastável",
+   "objective": "Criar o quadro 9:16 arrastável sobre o player, navegação pelo vídeo durante o ajuste e o aviso sobre as laterais cortadas. Regras de negócio: RN-10.4 a RN-10.7. Pasta alvo: app/.",
+   "done_criteria": "- Arrastar muda a posição única do enquadramento.\n- O aviso das laterais cortadas aparece.\n- A posição escolhida é a usada na exportação.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "vf1",
+    "ed4"
+   ]
+  },
+  {
+   "key": "vf3",
+   "epic": "Formato vertical",
+   "milestone": "F4 Legendas, áudio e vertical",
+   "sprint": "F4 Legendas, áudio e vertical",
+   "title": "Mostrar os dois downloads e o SRT na tela de concluído",
+   "objective": "Incluir na tela de concluído o Baixar todos, um botão por formato e o download opcional do SRT. Regras de negócio: RN-10.1, RN-12.5, RN-08.13. Pasta alvo: app/.",
+   "done_criteria": "- Dois formatos mostram dois botões e Baixar todos.\n- O SRT aparece só se foi pedido.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 1,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ex2",
+    "v2"
+   ]
+  },
+  {
+   "key": "ai1",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Criar o módulo ai com análises e limite por projeto",
+   "objective": "Criar o módulo ai com o schema de ai_suggestions, o job ai_analysis e o POST /ai/analyses que controla o limite de análises, a instrução livre de até 500 caracteres e a duração alvo. Regras de negócio: RN-07.10; seção 8 do documento de regras. Pasta alvo: api/.",
+   "done_criteria": "- Excede o limite de análises devolve o code correspondente.\n- Instrução acima de 500 caracteres é recusada.\n- O job ai_analysis é criado.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "j1",
+    "t4"
+   ]
+  },
+  {
+   "key": "ai2",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Criar o cliente OpenAI de LLM com Structured Outputs",
+   "objective": "Criar o cliente que envia o pedido e valida a resposta em JSON de schema estrito com outOfScope, note e suggestions, usando OPENAI_LLM_MODEL. Regras de negócio: RN-07.11; Documento Técnico 9. Pasta alvo: api/.",
+   "done_criteria": "- Resposta fora do schema é rejeitada.\n- O modelo vem de OPENAI_LLM_MODEL.\n- A IA recebe só o texto da transcrição.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "f4"
+   ]
+  },
+  {
+   "key": "ai3",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Montar o pedido da análise com frases numeradas e regras por tipo e modo",
+   "objective": "Montar o pedido com a transcrição em frases numeradas e corrigidas, as frases já cortadas ou protegidas, as regras de Podcast ou Aula e o modo (limpar conteúdo, duração alvo ou instrução livre). Regras de negócio: RN-07 modos a, b e c. Pasta alvo: api/.",
+   "done_criteria": "- As frases vão no formato [S1 | tempo | duração] texto.\n- Frases cortadas e protegidas entram na lista de exclusão.\n- Cada tipo e modo tem as regras do documento de regras.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "ai1",
+    "pc4"
+   ]
+  },
+  {
+   "key": "ai4",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Validar e converter as sugestões da IA em cortes pendentes",
+   "objective": "Validar IDs existentes, ausência de protegidos e de trechos já cortados, converter frases em tempos e gravar as sugestões como pending, descartando as pendentes da análise anterior. Regras de negócio: RN-07.5, RN-07.7, RN-07.8. Pasta alvo: api/.",
+   "done_criteria": "- Nenhuma sugestão cobre trecho protegido.\n- O corte sempre começa e termina em limite de frase.\n- Nova análise descarta as pendentes antigas.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "ai2",
+    "ai3"
+   ]
+  },
+  {
+   "key": "ai5",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Atender o modo duração alvo com segunda chamada",
+   "objective": "Validar a duração alvo entre 20 e 90 por cento, fazer uma segunda chamada quando o resultado ficar fora de mais ou menos 10 por cento e informar a duração atingida. Regras de negócio: RN-07 (b). Pasta alvo: api/.",
+   "done_criteria": "- Alvo fora de 20 a 90 por cento devolve o code de duração inválida.\n- As duas chamadas contam como uma análise.\n- A resposta informa a duração que as sugestões atingem.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "ai4"
+   ]
+  },
+  {
+   "key": "ai6",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Tratar pedido fora do escopo e IA indisponível",
+   "objective": "Tratar outOfScope sem consumir análise, o aviso de IA indisponível e o GET /ai/suggestions com a última análise. Regras de negócio: RN-07.2, RN-07.13. Pasta alvo: api/.",
+   "done_criteria": "- Pedido fora do escopo não conta no limite.\n- IA indisponível não afeta o resto do editor.\n- GET devolve texto, duração, categoria e motivo.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "ai4"
+   ]
+  },
+  {
+   "key": "ai7",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Criar aceitar e recusar sugestões individualmente e todas",
+   "objective": "Criar PATCH /ai/suggestions/:sid e POST /ai/suggestions/all que aceitam ou recusam, gerando cortes de origem IA e devolvendo a timeline. Regras de negócio: RN-07.1, RN-07.4, RN-07.9. Pasta alvo: api/.",
+   "done_criteria": "- Nenhum corte da IA entra sem aceite.\n- Sugestão aceita pode ser restaurada como qualquer corte.\n- Aceitar todas devolve a timeline recalculada.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "ai4",
+    "t4"
+   ]
+  },
+  {
+   "key": "ia1",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Criar a aba IA com tipo, modo e instruções",
+   "objective": "Criar a aba IA com tipo de conteúdo, modo, duração alvo, instrução livre de até 500 caracteres, botão Analisar, análises restantes e o aviso A IA pode errar. Regras de negócio: RN-07.10, RN-07.12. Pasta alvo: app/.",
+   "done_criteria": "- Mostra Você ainda pode fazer N análises.\n- Instrução limitada a 500 caracteres.\n- Mostra o aviso A IA pode errar. Revise as sugestões antes de aceitar.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed2",
+    "ai1"
+   ]
+  },
+  {
+   "key": "ia2",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Criar a lista de sugestões com pré-visualização e impacto",
+   "objective": "Criar a lista de sugestões com texto, duração, categoria e motivo, ouvir e ver o trecho no player, aceitar ou recusar individualmente e todas, e o impacto 41:37 → 29:05 em tempo real. Regras de negócio: RN-07.2 a RN-07.6. Pasta alvo: app/.",
+   "done_criteria": "- Toda sugestão tem motivo e pode ser pré-visualizada.\n- Mostra o impacto ao aceitar as selecionadas.\n- Aceitar todas e Recusar todas funcionam.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ia1",
+    "ed4",
+    "ai7"
+   ]
+  },
+  {
+   "key": "ia3",
+   "epic": "Corte inteligente com IA",
+   "milestone": "F5 Corte inteligente com IA",
+   "sprint": "F5 Corte inteligente com IA",
+   "title": "Mostrar o andamento e os erros da análise de IA",
+   "objective": "Atualizar a aba IA com o evento ai.analysis do SSE e tratar IA indisponível e pedido fora do escopo. Regras de negócio: RN-07.13; seção 9 do documento de regras. Pasta alvo: app/.",
+   "done_criteria": "- O andamento da análise aparece sem recarregar.\n- Mostra a mensagem do code para IA indisponível e fora do escopo.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ia1",
+    "e3"
+   ]
+  },
+  {
+   "key": "g1",
+   "epic": "Limites e privacidade",
+   "milestone": "F6 Limites, privacidade e lançamento",
+   "sprint": "F6 Limites, privacidade e lançamento",
+   "title": "Aplicar os limites de uso configuráveis",
+   "objective": "Aplicar na API os limites configuráveis por ambiente: tamanho 2 GB, duração 2 h, retenção, exportações por projeto, análises de IA e 1 projeto processando por aparelho, com code de erro de cada um. Regras de negócio: Seção 8 do documento de regras. Pasta alvo: api/.",
+   "done_criteria": "- Cada limite vem de uma variável de ambiente LIMIT_*.\n- Cada violação devolve o code da seção 9.\n- GET /config reflete os valores vigentes.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "pr6",
+    "x1",
+    "ai1"
+   ]
+  },
+  {
+   "key": "g2",
+   "epic": "Limites e privacidade",
+   "milestone": "F6 Limites, privacidade e lançamento",
+   "sprint": "F6 Limites, privacidade e lançamento",
+   "title": "Reforçar o antiabuso nas rotas sensíveis",
+   "objective": "Aplicar o throttler por IP nas rotas sensíveis, o hash do IP e a proteção de disco com a mensagem de muita demanda. Regras de negócio: Documento Técnico 14. Pasta alvo: api/.",
+   "done_criteria": "- Excesso de requisições devolve 429 com code.\n- O IP é guardado só como hash.\n- Disco baixo recusa novo envio com a mensagem de demanda.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "g1"
+   ]
+  },
+  {
+   "key": "g3",
+   "epic": "Limites e privacidade",
+   "milestone": "F6 Limites, privacidade e lançamento",
+   "sprint": "F6 Limites, privacidade e lançamento",
+   "title": "Criar logs seguros",
+   "objective": "Criar o logger que nunca registra token do projeto, texto de transcrição nem nome de arquivo. Regras de negócio: PV-01 a PV-04; Documento Técnico 14. Pasta alvo: api/.",
+   "done_criteria": "- Nenhum log contém token, texto de transcrição ou nome de arquivo.\n- O logger é usado por todos os módulos.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a4"
+   ]
+  },
+  {
+   "key": "g4",
+   "epic": "Lançamento",
+   "milestone": "F6 Limites, privacidade e lançamento",
+   "sprint": "F6 Limites, privacidade e lançamento",
+   "title": "Criar a landing da versão web",
+   "objective": "Criar a landing na rota inicial da web com o que o produto faz, a explicação de privacidade em até 3 frases e o botão de começar. Regras de negócio: PV-06; seção 10 do documento de regras. Pasta alvo: app/.",
+   "done_criteria": "- Explica privacidade em no máximo 3 frases.\n- Existe só na web (.web.tsx).\n- O botão leva ao envio do vídeo.",
+   "task_type": "Funcionalidade",
+   "priority": "Baixa",
+   "story_points": 3,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "up2"
+   ]
+  },
+  {
+   "key": "g5",
+   "epic": "Limites e privacidade",
+   "milestone": "F6 Limites, privacidade e lançamento",
+   "sprint": "F6 Limites, privacidade e lançamento",
+   "title": "Completar as mensagens de erro e a tela de erro padrão",
+   "objective": "Completar i18n/errors.json com todos os codes da seção 9 e criar a tela de erro padrão com a ação oferecida (Tentar novamente, Escolher outro arquivo, Começar novo projeto). Regras de negócio: Seção 9 do documento de regras. Pasta alvo: app/.",
+   "done_criteria": "- Todos os codes da seção 9 têm mensagem.\n- Cada erro oferece a ação da tabela da seção 9.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "m4"
+   ]
+  },
+  {
+   "key": "g6",
+   "epic": "Limites e privacidade",
+   "milestone": "F6 Limites, privacidade e lançamento",
+   "sprint": "F6 Limites, privacidade e lançamento",
+   "title": "Tratar vídeo sem fala e transcrição de baixa confiança no app",
+   "objective": "Mostrar o aviso de nenhuma fala detectada desativando as ferramentas dependentes de fala e o aviso de transcrição com muitos erros com a opção de continuar. Regras de negócio: RN-04.8, RN-04.9, RP-03. Pasta alvo: app/.",
+   "done_criteria": "- Sem fala continuam disponíveis volume e formato.\n- Baixa confiança permite continuar mesmo assim.",
+   "task_type": "Funcionalidade",
+   "priority": "Média",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "ed1"
+   ]
+  },
+  {
+   "key": "g7",
+   "epic": "Lançamento",
+   "milestone": "F6 Limites, privacidade e lançamento",
+   "sprint": "F6 Limites, privacidade e lançamento",
+   "title": "Criar o script de deploy, o Caddyfile e o backup do banco",
+   "objective": "Criar deploy.sh (pull, build, migrações do Prisma, reload do PM2 e export web do app), o Caddyfile com buffer desligado na rota SSE e o backup diário com mariadb-dump e retenção de 7 dias. Regras de negócio: Documento Técnico 15.3 e 15.4. Pasta alvo: api/.",
+   "done_criteria": "- O script roda de ponta a ponta numa VPS limpa seguindo o README.\n- O Caddyfile encaminha /v1 e /docs para a API e serve o app estático.\n- O backup guarda 7 dias.",
+   "task_type": "Configuração",
+   "priority": "Baixa",
+   "story_points": 3,
+   "competencies": [
+    "Backend"
+   ],
+   "depends_on": [
+    "a5"
+   ]
+  },
+  {
+   "key": "g8",
+   "epic": "Lançamento",
+   "milestone": "F6 Limites, privacidade e lançamento",
+   "sprint": "F6 Limites, privacidade e lançamento",
+   "title": "Configurar os builds nativos com EAS",
+   "objective": "Criar eas.json e app.json com nome, ícones, splash e permissões de galeria para iOS e Android. Regras de negócio: Documento Técnico 15.3. Pasta alvo: app/.",
+   "done_criteria": "- eas.json define os perfis de build.\n- app.json declara as permissões de galeria.",
+   "task_type": "Configuração",
+   "priority": "Baixa",
+   "story_points": 2,
+   "competencies": [
+    "Mobile"
+   ],
+   "depends_on": [
+    "m1"
+   ]
+  }
+ ]
+}
