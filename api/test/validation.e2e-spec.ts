@@ -12,6 +12,7 @@ import { IsInt, IsString, Min } from 'class-validator';
 import request from 'supertest';
 
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
+import { translateConstraints } from '../src/common/validation/translate-constraints';
 
 class CriarExemploDto {
   @IsString()
@@ -53,7 +54,11 @@ describe('Validação global (e2e)', () => {
         whitelist: true,
         exceptionFactory: (errors: any[]) => {
           const message = errors
-            .flatMap((err) => Object.values(err.constraints || {}))
+            .flatMap((err) => {
+              const field = err.property;
+              const constraints = translateConstraints(err.constraints || {});
+              return constraints.map((c) => `${field} ${c}`);
+            })
             .join('; ');
 
           const exception = new UnprocessableEntityException(message);
