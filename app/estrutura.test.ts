@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import jestConfig from './jest.config';
+
 const tsconfig = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'tsconfig.json'), 'utf-8'),
 );
@@ -33,6 +35,23 @@ describe('Aliases do TypeScript (PDE-6)', () => {
     expect(Object.keys(tsconfig.compilerOptions.paths).sort()).toEqual([
       '@/*',
       '@src/*',
+    ]);
+  });
+});
+
+describe('Alias no Jest (PDE-6)', () => {
+  it('mapeia @/* para a mesma pasta que o tsconfig', () => {
+    expect(jestConfig.moduleNameMapper['^@/(.*)$']).toBe('<rootDir>/$1');
+  });
+
+  it('mapeia @src/* para a mesma pasta que o tsconfig', () => {
+    expect(jestConfig.moduleNameMapper['^@src/(.*)$']).toBe('<rootDir>/src/$1');
+  });
+
+  it('não define alias no Jest além dos dois que existem no tsconfig', () => {
+    expect(Object.keys(jestConfig.moduleNameMapper).sort()).toEqual([
+      '^@/(.*)$',
+      '^@src/(.*)$',
     ]);
   });
 });
