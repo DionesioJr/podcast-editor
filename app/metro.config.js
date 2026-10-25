@@ -8,4 +8,6 @@ config.resolver.extraNodeModules = {
   '@src': path.join(__dirname, 'src'),
 };
 
+config.resolver.blockList = [/\.(test|spec)\.[jt]sx?$/];
+
 module.exports = config;
