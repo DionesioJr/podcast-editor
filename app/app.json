@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Podcast Editor",
+    "slug": "podcast-editor",
+    "scheme": "podcast-editor",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": ["expo-router"],
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    }
+  }
+}
