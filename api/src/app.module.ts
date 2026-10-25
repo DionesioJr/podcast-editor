@@ -3,7 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerModuleOptions, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
+import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './modules/health/health.module';
+import { ProjectsModule } from './modules/projects/projects.module';
 import { validate } from './common/config/config.schema';
 
 @Module({
@@ -22,7 +24,9 @@ import { validate } from './common/config/config.schema';
       ],
       inject: [ConfigService],
     }),
+    SharedModule,
     HealthModule,
+    ProjectsModule,
   ],
   providers: [
     {
