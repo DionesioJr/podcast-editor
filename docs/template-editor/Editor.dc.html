@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="global.css" />
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;background:#F1F0F6">
+
+  <header class="m-header" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding:16px 28px;background:#fff;border-bottom:1px solid #E4E2EC;position:sticky;top:0;z-index:20">
+    <div style="display:flex;align-items:center;gap:10px;flex:none">
+      <div style="width:30px;height:30px;border-radius:9px;background:#4F2BE8;display:flex;align-items:center;justify-content:center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M4 9v6M8 5v14M12 8v8M16 4v16M20 10v4" /></svg>
+      </div>
+      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em">{{ nomeProduto }}</span>
+    </div>
+
+    <sc-if value="{{ emProjeto }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;gap:10px;min-width:120px;flex:0 1 auto">
+        <div style="width:1px;height:22px;background:#E4E2EC;flex:none"></div>
+        <span style="font-size:14px;font-weight:600;color:#3D3A4C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fileName }}</span>
+      </div>
+    </sc-if>
+
+    <div style="flex:1"></div>
+
+    <sc-if value="{{ emProjeto }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="m-expira" style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#6B6879;background:#F4F3F8;border-radius:999px;padding:6px 12px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+          Expira em 23 h
+        </span>
+        <button onClick="{{ descartar }}" class="m-descartar" style="font-family:inherit;font-size:13px;font-weight:600;color:#6B6879;background:none;border:1px solid #E4E2EC;border-radius:10px;padding:8px 14px;cursor:pointer" style-hover="color:#C0392B;border-color:#F0C9C3;background:#FDF3F1"><span class="d-only">Descartar projeto</span><span class="m-only">Descartar</span></button>
+      </div>
+    </sc-if>
+  </header>
+
+  <!-- Cada tela vive no seu proprio arquivo .dc.html (mesma pasta, pois o
+       dc-import so resolve nomes sem barra). O shell mantem o estado e repassa
+       tudo ja calculado via dcProps. -->
+
+  <sc-if value="{{ telaUpload }}" hint-placeholder-val="{{ true }}">
+    <dc-import name="Upload" dcProps="{{ uploadProps }}"></dc-import>
+  </sc-if>
+
+  <sc-if value="{{ telaProcessando }}" hint-placeholder-val="{{ false }}">
+    <dc-import name="Processando" dcProps="{{ processandoProps }}"></dc-import>
+  </sc-if>
+
+  <sc-if value="{{ telaEditor }}" hint-placeholder-val="{{ false }}">
+    <dc-import name="Edicao" dcProps="{{ edicaoProps }}"></dc-import>
+  </sc-if>
+
+  <sc-if value="{{ telaConcluido }}" hint-placeholder-val="{{ false }}">
+    <dc-import name="Concluido" dcProps="{{ concluidoProps }}"></dc-import>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nomeProduto&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Editor&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;telaInicial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;upload&quot;,&quot;processando&quot;,&quot;editor&quot;,&quot;concluido&quot;],&quot;default&quot;:&quot;upload&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Protótipo&quot;},&quot;duracaoOriginalSeg&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3492,&quot;min&quot;:60,&quot;max&quot;:7200,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Protótipo&quot;}}">
+const SEL = "0 1px 3px rgba(22,20,31,.14)";
+
+const ORIG_COR = { pausa: "#4F2BE8", hesitacao: "#E8388F", ia: "#F59E0B", manual: "#0EA5E9" };
+
+const SUGESTOES = [
+  { id: "s1", categoria: "Bastidores", dur: "8 s", seg: 8, texto: "Tá gravando? Acho que sim, o ponto vermelho tá aceso.", motivo: "Conversa antes da aula começar. Não faz parte do conteúdo." },
+  { id: "s2", categoria: "Erros e regravações", dur: "6 s", seg: 6, texto: "Não, peraí, deixa eu começar essa parte de novo.", motivo: "Você refez essa explicação logo em seguida, de forma mais clara." },
+  { id: "s3", categoria: "Fora do assunto", dur: "34 s", seg: 34, texto: "Ontem eu tava vendo um vídeo sobre isso… falando nisso, vocês viram o jogo?", motivo: "Digressão longa, sem relação com o tema da aula." },
+  { id: "s4", categoria: "Repetição", dur: "11 s", seg: 11, texto: "Ou seja, cada x tem um resultado só. Um x, um resultado.", motivo: "A mesma ideia já foi dita na frase anterior." }
+];
+
+const TRANSCRICAO = [
+  { falante: "Professor", cor: "#4F2BE8", itens: [
+    { id: "i1", tipo: "fala", seg: 8, sug: "s1", texto: "Tá gravando? Acho que sim, o ponto vermelho tá aceso." },
+    { id: "i2", tipo: "fala", seg: 4, texto: "Bom dia, pessoal." },
+    { id: "i3", tipo: "hesitacao", seg: 1, texto: "é…" },
+    { id: "i4", tipo: "fala", seg: 6, texto: "Hoje a gente continua o assunto de funções." },
+    { id: "i5", tipo: "pausa", seg: 3.4, texto: "pausa 3,4 s" },
+    { id: "i6", tipo: "fala", seg: 9, texto: "Na aula passada a gente viu domínio e imagem." },
+    { id: "i7", tipo: "fala", seg: 6, sug: "s2", texto: "Não, peraí, deixa eu começar essa parte de novo." },
+    { id: "i8", tipo: "fala", seg: 14, texto: "Uma função liga cada elemento de um conjunto a um único elemento de outro conjunto." },
+    { id: "i9", tipo: "pausa", seg: 4.2, texto: "pausa 4,2 s" },
+    { id: "i10", tipo: "fala", seg: 5, texto: "Olha esse exemplo aqui no quadro." },
+    { id: "i11", tipo: "hesitacao", seg: 1, texto: "hum" },
+    { id: "i12", tipo: "fala", seg: 13, texto: "Se f de x é igual a dois x mais um, para cada valor de x eu tenho um único resultado." },
+    { id: "i13", tipo: "fala", seg: 34, sug: "s3", texto: "Ontem eu tava vendo um vídeo sobre isso, muito bom, depois eu mando o link. Falando nisso, vocês viram o jogo ontem?" }
+  ] },
+  { falante: "Aluna", cor: "#E8388F", itens: [
+    { id: "i14", tipo: "fala", seg: 5, texto: "Professor, e se o x for negativo?" }
+  ] },
+  { falante: "Professor", cor: "#4F2BE8", itens: [
+    { id: "i15", tipo: "fala", seg: 12, texto: "Ótima pergunta. Menos dois vezes dois dá menos quatro, mais um, menos três." },
+    { id: "i16", tipo: "pausa", seg: 2.1, texto: "pausa 2,1 s" },
+    { id: "i17", tipo: "fala", seg: 11, sug: "s4", texto: "Ou seja, cada x tem um resultado só. Um x, um resultado." },
+    { id: "i18", tipo: "fala", seg: 8, texto: "Então funciona igual para qualquer número." }
+  ] }
+];
+
+class Component extends DCLogic {
+  state = {
+    tela: null,
+    fileName: "aula-03-funcoes.mp4",
+    passo: 0,
+    progresso: 0,
+    pausas: true, nivel: "eq", hesitacoes: false,
+    ia: false, legendas: true, nivelar: true,
+    aumentar: false, vol: 50,
+    horizontal: true, vertical: false,
+    dragging: false,
+    tentouExportar: false,
+    sug: { s1: "pendente", s2: "pendente", s3: "pendente", s4: "pendente" },
+    override: {},
+    historico: [],
+    playerModo: "final",
+    aba: "ferramentas",
+    formatoPreview: "h",
+    exportando: false,
+    expPct: 0,
+    iaRestantes: 4
+  };
+
+  get tela() { return this.state.tela ?? (this.props.telaInicial || "upload"); }
+
+  fmt(s) {
+    s = Math.max(0, Math.round(s));
+    const m = Math.floor(s / 60), r = s % 60;
+    return m + ":" + String(r).padStart(2, "0");
+  }
+
+  iniciar = (nome) => {
+    this.setState({ tela: "processando", passo: 0, progresso: 0, fileName: nome || this.state.fileName });
+    clearInterval(this._t);
+    const inicio = Date.now(), total = 4600;
+    this._t = setInterval(() => {
+      const p = Math.min(100, ((Date.now() - inicio) / total) * 100);
+      this.setState({ progresso: p, passo: Math.min(3, Math.floor(p / 25)) });
+      if (p >= 100) { clearInterval(this._t); setTimeout(() => this.setState({ tela: "editor" }), 450); }
+    }, 90);
+  };
+
+  componentWillUnmount() { clearInterval(this._t); clearInterval(this._e); }
+
+  push(patch) {
+    this.setState((s) => ({ ...patch, historico: [...s.historico, { sug: { ...s.sug }, override: { ...s.override } }].slice(-30) }));
+  }
+
+  desfazer = () => {
+    this.setState((s) => {
+      if (!s.historico.length) return null;
+      const h = [...s.historico], last = h.pop();
+      return { sug: last.sug, override: last.override, historico: h };
+    });
+  };
+
+  autoCorte(it) {
+    const s = this.state;
+    if (it.tipo === "pausa") return s.pausas;
+    if (it.tipo === "hesitacao") return s.hesitacoes;
+    if (it.sug) return s.ia && s.sug[it.sug] === "aceita";
+    return false;
+  }
+
+  estaCortado(it) {
+    const ov = this.state.override[it.id];
+    if (ov) return ov === "cortado";
+    return this.autoCorte(it);
+  }
+
+  origemDe(it) {
+    if (this.state.override[it.id] === "cortado") return "manual";
+    if (it.tipo === "pausa") return "pausa";
+    if (it.tipo === "hesitacao") return "hesitacao";
+    return "ia";
+  }
+
+  iniciarExport = () => {
+    clearInterval(this._e);
+    this.setState({ exportando: true, expPct: 0 });
+    const t0 = Date.now(), total = 3800;
+    this._e = setInterval(() => {
+      const p = Math.min(100, Math.round(((Date.now() - t0) / total) * 100));
+      this.setState({ expPct: p });
+      if (p >= 100) { clearInterval(this._e); setTimeout(() => this.setState({ exportando: false, tela: "concluido" }), 400); }
+    }, 100);
+  };
+
+  renderVals() {
+    const s = this.state, tela = this.tela;
+    const orig = this.props.duracaoOriginalSeg ?? 3492;
+    const cortePausa = s.pausas ? ({ su: 0.12, eq: 0.17, ag: 0.235 })[s.nivel] : 0;
+    const corteHes = s.hesitacoes ? 0.028 : 0;
+    const final = orig * (1 - cortePausa - corteHes);
+    const nPausas = { su: 24, eq: 38, ag: 57 }[s.nivel];
+
+    const seg = (on) => ({ bg: on ? "#fff" : "transparent", fg: on ? "#16141F" : "#6B6879", sh: on ? SEL : "none" });
+    const nS = seg(s.pausas && s.nivel === "su"), nE = seg(s.pausas && s.nivel === "eq"), nA = seg(s.pausas && s.nivel === "ag");
+    const a25 = seg(s.vol === 25), a50 = seg(s.vol === 50), a100 = seg(s.vol === 100);
+    const box = (on) => ({ bg: on ? "#4F2BE8" : "#fff", bd: on ? "#4F2BE8" : "#D3D0DE" });
+
+    const aceitas = SUGESTOES.filter((g) => s.sug[g.id] === "aceita").length;
+    const nPendentes = SUGESTOES.filter((g) => s.sug[g.id] === "pendente").length;
+
+    // Abas do mobile. Se a IA for desligada, a aba dela some: cai em Ferramentas.
+    const abaAtiva = s.aba === "ia" && !s.ia ? "ferramentas" : s.aba;
+    const irParaAba = (a) => {
+      this.setState({ aba: a });
+      // Trocar de aba mostra o painel desde o inicio, nao no meio da rolagem.
+      if (typeof window !== "undefined" && window.innerWidth <= 840) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
+    const aF = seg(abaAtiva === "ferramentas"), aS = seg(abaAtiva === "ia"), aT = seg(abaAtiva === "transcricao");
+
+    const resumo = [];
+    if (s.pausas) resumo.push(nPausas + " pausas cortadas · " + { su: "Suave", eq: "Equilibrado", ag: "Agressivo" }[s.nivel]);
+    if (s.hesitacoes) resumo.push("41 hesitações removidas");
+    if (s.ia) resumo.push(aceitas ? aceitas + " cortes da IA aceitos" : nPendentes ? nPendentes + " sugestões da IA para revisar" : "Nenhum corte da IA aplicado");
+    if (s.legendas) resumo.push("Legendas gravadas no vídeo");
+    if (s.nivelar) resumo.push("Volume nivelado");
+    if (s.aumentar) resumo.push("Volume aumentado em " + (s.vol === 100 ? "100% (dobro)" : "+" + s.vol + "%"));
+    const fmts = [s.horizontal && "horizontal", s.vertical && "vertical"].filter(Boolean);
+    if (fmts.length) resumo.push("Exporta em " + fmts.join(" e "));
+
+    let ajuste = 0;
+    const linha = [];
+    const blocos = TRANSCRICAO.map((b) => ({
+      falante: b.falante, cor: b.cor,
+      itens: b.itens.map((it) => {
+        const cortado = this.estaCortado(it);
+        const origem = this.origemDe(it);
+        const inBase = (it.tipo === "pausa" && s.pausas) || (it.tipo === "hesitacao" && s.hesitacoes);
+        if (inBase && !cortado) ajuste += it.seg;
+        if (!inBase && cortado) ajuste -= it.seg;
+        linha.push({ peso: it.seg, cor: cortado ? ORIG_COR[origem] : "#D8D5E4" });
+        return {
+          texto: it.texto,
+          cor: cortado ? "#AEABBB" : it.tipo === "pausa" ? "#B4B1C0" : "#16141F",
+          deco: cortado ? "line-through" : "none",
+          decoCor: ORIG_COR[origem],
+          fundo: cortado ? "transparent" : it.tipo === "pausa" ? "#F2F1F7" : it.tipo === "hesitacao" ? "#FDEAF3" : "transparent",
+          clicar: () => this.push({ override: { ...s.override, [it.id]: this.estaCortado(it) ? "restaurado" : "cortado" } })
+        };
+      })
+    }));
+    const finalAj = Math.max(3, final + ajuste);
+
+    const sugestoes = SUGESTOES.map((g) => {
+      const st = s.sug[g.id];
+      return {
+        ...g,
+        bg: st === "aceita" ? "#F6FCF9" : st === "recusada" ? "#FAFAFD" : "#fff",
+        bd: st === "aceita" ? "#CFEADD" : "#E4E2EC",
+        estadoTexto: st === "aceita" ? "Aceita" : st === "recusada" ? "Mantida no vídeo" : "Aguardando você",
+        estadoCor: st === "aceita" ? "#12724D" : st === "recusada" ? "#8B8898" : "#B27A0B",
+        aceitar: () => this.push({ sug: { ...s.sug, [g.id]: "aceita" } }),
+        recusar: () => this.push({ sug: { ...s.sug, [g.id]: "recusada" } })
+      };
+    });
+
+    const pF = seg(s.playerModo === "final"), pO = seg(s.playerModo === "original");
+    const doisFormatos = s.horizontal && s.vertical;
+    const vertPreview = s.vertical && (!s.horizontal || s.formatoPreview === "v");
+    const fH = seg(!vertPreview), fV = seg(vertPreview);
+
+    const base = (s.fileName || "video").replace(/\.[^.]+$/, "");
+    const downloads = [];
+    if (s.horizontal) downloads.push({ tag: "16:9", nome: base + "_editado_horizontal.mp4", detalhe: "Full HD · " + this.fmt(finalAj), iconeBg: "#EEE9FF", iconeFg: "#4F2BE8" });
+    if (s.vertical) downloads.push({ tag: "9:16", nome: base + "_editado_vertical.mp4", detalhe: "Full HD · " + this.fmt(finalAj), iconeBg: "#FDEAF3", iconeFg: "#E8388F" });
+    if (s.legendas) downloads.push({ tag: "SRT", nome: base + "_editado.srt", detalhe: "Arquivo de legenda separado", iconeBg: "#F4F3F8", iconeFg: "#6B6879" });
+    downloads.push({ tag: "TXT", nome: base + "_transcricao.txt", detalhe: "Transcrição em texto simples", iconeBg: "#F4F3F8", iconeFg: "#6B6879" });
+
+    const podeExportar = s.horizontal || s.vertical;
+
+    const all = {
+      nomeProduto: this.props.nomeProduto ?? "Editor",
+      fileName: s.fileName,
+      emProjeto: tela !== "upload",
+      telaUpload: tela === "upload",
+      telaProcessando: tela === "processando",
+      telaEditor: tela === "editor",
+      telaConcluido: tela === "concluido",
+
+      dropBg: s.dragging ? "#EEE9FF" : "#fff",
+      dropBd: s.dragging ? "#4F2BE8" : "#D8D5E4",
+      aoArrastar: (e) => { e.preventDefault(); if (!s.dragging) this.setState({ dragging: true }); },
+      aoSair: () => this.setState({ dragging: false }),
+      aoSoltar: (e) => { e.preventDefault(); const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; this.setState({ dragging: false }); this.iniciar(f && f.name); },
+      aoEscolher: (e) => { const f = e.target.files && e.target.files[0]; this.iniciar(f && f.name); },
+      descartar: () => this.setState({ tela: "upload", progresso: 0, passo: 0, tentouExportar: false }),
+      voltarEditar: () => this.setState({ tela: "editor" }),
+      nada: () => {},
+
+      etapas: ["Verificando o vídeo", "Extraindo o áudio", "Transcrevendo a fala", "Detectando pausas"].map((nome, i) => {
+        const tempos = ["3 s", "12 s", "1 min 20 s", "18 s"];
+        const feito = i < s.passo || s.progresso >= 100;
+        const ativo = i === s.passo && s.progresso < 100;
+        return {
+          nome,
+          tempo: feito ? "concluído" : ativo ? "em andamento" : tempos[i],
+          peso: ativo ? 700 : 500,
+          cor: feito || ativo ? "#16141F" : "#9B98A8",
+          bg: feito ? "#1F9D6B" : "#fff",
+          bd: feito ? "#1F9D6B" : ativo ? "#4F2BE8" : "#E4E2EC",
+          fg: "#fff",
+          icone: feito
+            ? React.createElement("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 3.6, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "m5 13 4.5 4.5L19 7" }))
+            : ativo
+              ? React.createElement("span", { style: { width: 9, height: 9, borderRadius: "50%", background: "#4F2BE8", display: "block", animation: "pulseSoft 1s ease-in-out infinite" } })
+              : null
+        };
+      }),
+      progresso: s.progresso,
+
+      pausas: s.pausas, hesitacoes: s.hesitacoes, ia: s.ia, legendas: s.legendas,
+      nivelar: s.nivelar, aumentar: s.aumentar, horizontal: s.horizontal, vertical: s.vertical,
+
+      togglePausas: () => this.setState({ pausas: !s.pausas }),
+      toggleHesit: (e) => { e.stopPropagation(); this.setState({ hesitacoes: !s.hesitacoes }); },
+      toggleIA: () => this.setState({ ia: !s.ia }),
+      toggleLegendas: () => this.setState({ legendas: !s.legendas }),
+      toggleNivelar: () => this.setState({ nivelar: !s.nivelar }),
+      toggleAumentar: () => this.setState({ aumentar: !s.aumentar }),
+      toggleH: () => this.setState({ horizontal: !s.horizontal }),
+      toggleV: () => this.setState({ vertical: !s.vertical }),
+      nivelSuave: (e) => { e.stopPropagation(); this.setState({ nivel: "su" }); },
+      nivelEquil: (e) => { e.stopPropagation(); this.setState({ nivel: "eq" }); },
+      nivelAgress: (e) => { e.stopPropagation(); this.setState({ nivel: "ag" }); },
+      vol25: (e) => { e.stopPropagation(); this.setState({ vol: 25 }); },
+      vol50: (e) => { e.stopPropagation(); this.setState({ vol: 50 }); },
+      vol100: (e) => { e.stopPropagation(); this.setState({ vol: 100 }); },
+
+      boxPausasBg: box(s.pausas).bg, boxPausasBd: box(s.pausas).bd,
+      boxHesitBg: box(s.hesitacoes).bg, boxHesitBd: box(s.hesitacoes).bd,
+      boxIABg: box(s.ia).bg, boxIABd: box(s.ia).bd,
+      boxLegBg: box(s.legendas).bg, boxLegBd: box(s.legendas).bd,
+      boxNivBg: box(s.nivelar).bg, boxNivBd: box(s.nivelar).bd,
+      boxAumBg: box(s.aumentar).bg, boxAumBd: box(s.aumentar).bd,
+
+      nSuaveBg: nS.bg, nSuaveFg: nS.fg, nSuaveSh: nS.sh,
+      nEquilBg: nE.bg, nEquilFg: nE.fg, nEquilSh: nE.sh,
+      nAgressBg: nA.bg, nAgressFg: nA.fg, nAgressSh: nA.sh,
+      v25Bg: a25.bg, v25Fg: a25.fg, v25Sh: a25.sh,
+      v50Bg: a50.bg, v50Fg: a50.fg, v50Sh: a50.sh,
+      v100Bg: a100.bg, v100Fg: a100.fg, v100Sh: a100.sh,
+
+      dicaNivel: { su: "Corta pausas acima de 1,2 s. Bom para aulas e conteúdo reflexivo.", eq: "Corta pausas acima de 0,7 s. Bom para a maioria dos podcasts.", ag: "Corta pausas acima de 0,4 s. Ritmo acelerado, para vídeos curtos." }[s.nivel],
+
+      hBg: s.horizontal ? "#F6F3FF" : "#fff", hBd: s.horizontal ? "#4F2BE8" : "#E4E2EC", hIco: s.horizontal ? "#4F2BE8" : "#D3D0DE",
+      vBg: s.vertical ? "#F6F3FF" : "#fff", vBd: s.vertical ? "#4F2BE8" : "#E4E2EC", vIco: s.vertical ? "#4F2BE8" : "#D3D0DE",
+      semFormato: s.tentouExportar && !podeExportar,
+
+      abaAtiva,
+      abaFerramentas: () => irParaAba("ferramentas"),
+      abaSugestoes: () => irParaAba("ia"),
+      abaTranscricao: () => irParaAba("transcricao"),
+      aFerrBg: aF.bg, aFerrFg: aF.fg, aFerrSh: aF.sh,
+      aSugBg: aS.bg, aSugFg: aS.fg, aSugSh: aS.sh,
+      aTransBg: aT.bg, aTransFg: aT.fg, aTransSh: aT.sh,
+      iaPendentesN: nPendentes,
+
+      blocos, linha, resumo, desfazer: this.desfazer,
+      legendaCores: [
+        { nome: "Pausa", cor: ORIG_COR.pausa },
+        { nome: "Hesitação", cor: ORIG_COR.hesitacao },
+        { nome: "IA", cor: ORIG_COR.ia },
+        { nome: "Manual", cor: ORIG_COR.manual }
+      ],
+      durOriginal: this.fmt(orig),
+      durFinal: this.fmt(finalAj),
+      durDelta: "−" + this.fmt(orig - finalAj),
+
+      sugestoes,
+      iaRestantesTexto: "Você ainda pode fazer " + s.iaRestantes + " análises neste projeto",
+      aceitarTodas: () => this.push({ sug: { s1: "aceita", s2: "aceita", s3: "aceita", s4: "aceita" } }),
+      recusarTodas: () => this.push({ sug: { s1: "recusada", s2: "recusada", s3: "recusada", s4: "recusada" } }),
+      iaPendente: s.ia && nPendentes > 0,
+      iaPendenteTexto: nPendentes + " sugestões da IA ainda não revisadas. Elas não serão aplicadas.",
+
+      pFinalBg: pF.bg, pFinalFg: pF.fg, pFinalSh: pF.sh,
+      pOrigBg: pO.bg, pOrigFg: pO.fg, pOrigSh: pO.sh,
+      verFinal: () => this.setState({ playerModo: "final" }),
+      verOriginal: () => this.setState({ playerModo: "original" }),
+      doisFormatos,
+      fHBg: fH.bg, fHFg: fH.fg, fHSh: fH.sh,
+      fVBg: fV.bg, fVFg: fV.fg, fVSh: fV.sh,
+      preverH: () => this.setState({ formatoPreview: "h" }),
+      preverV: () => this.setState({ formatoPreview: "v" }),
+      previewRatio: vertPreview ? "9/16" : "16/9",
+      previewMax: vertPreview ? "280px" : "100%",
+
+      exportando: s.exportando,
+      expPct: s.expPct,
+      btnLabel: s.exportando ? "Cancelar exportação" : "Exportar vídeo",
+      btnBg: podeExportar ? (s.exportando ? "#EDEBF3" : "#4F2BE8") : "#E4E2EC",
+      btnFg: podeExportar ? (s.exportando ? "#3D3A4C" : "#fff") : "#9B98A8",
+      btnSh: podeExportar && !s.exportando ? "0 14px 30px -14px rgba(79,43,232,.85)" : "none",
+      btnCursor: podeExportar ? "pointer" : "not-allowed",
+      exportar: () => {
+        if (s.exportando) { clearInterval(this._e); this.setState({ exportando: false, expPct: 0 }); return; }
+        if (!podeExportar) { this.setState({ tentouExportar: true }); return; }
+        this.iniciarExport();
+      },
+      downloads
+    };
+
+    // Cada tela recebe so o que precisa. A tela de Edicao usa quase tudo
+    // (preview, ferramentas, IA, transcricao, resumo, exportacao), entao
+    // recebe o objeto inteiro em vez de uma lista manual sujeita a esquecer
+    // uma chave nova.
+    return {
+      ...all,
+      uploadProps: {
+        dropBg: all.dropBg, dropBd: all.dropBd,
+        aoArrastar: all.aoArrastar, aoSair: all.aoSair, aoSoltar: all.aoSoltar, aoEscolher: all.aoEscolher
+      },
+      processandoProps: {
+        etapas: all.etapas, progresso: all.progresso
+      },
+      edicaoProps: all,
+      concluidoProps: {
+        durFinal: all.durFinal, downloads: all.downloads, nada: all.nada, voltarEditar: all.voltarEditar
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

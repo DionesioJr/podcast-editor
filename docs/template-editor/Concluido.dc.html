@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="global.css" />
+<style>
+  @media (max-width:840px) {
+    .m-done-actions > button { flex:1 1 100% !important; min-width:0 !important; }
+    .m-dl { padding:14px 16px !important; border-radius:16px !important; }
+  }
+  @media (max-width:560px) {
+    .m-done-main { padding:24px 16px 32px !important; }
+    .m-done-title { font-size:23px !important; }
+  }
+</style>
+</helmet>
+
+<main class="m-done-main" style="flex:1;display:flex;align-items:center;justify-content:center;padding:48px 24px">
+  <div style="width:100%;max-width:600px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <div style="width:46px;height:46px;border-radius:15px;background:#E7F6EF;display:flex;align-items:center;justify-content:center;flex:none">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7" /></svg>
+      </div>
+      <div>
+        <h2 class="m-done-title" style="font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:700;letter-spacing:-.03em;margin:0">Seu vídeo está pronto</h2>
+        <div style="font-size:14.5px;color:#6B6879;margin-top:3px">{{ durFinal }} · sem marca d’água · disponível por 23 h</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ downloads }}" as="d" hint-placeholder-count="3">
+        <div class="m-dl" style="display:flex;align-items:center;gap:16px;background:#fff;border:1px solid #E4E2EC;border-radius:20px;padding:18px 20px;cursor:pointer;transition:all .15s" style-hover="border-color:#C9BEF7;background:#FCFBFF">
+          <div style="width:42px;height:42px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;background:{{ d.iconeBg }};color:{{ d.iconeFg }};font-size:11px;font-weight:700;letter-spacing:.04em">{{ d.tag }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15.5px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.nome }}</div>
+            <div style="font-size:13.5px;color:#6B6879;margin-top:2px">{{ d.detalhe }}</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F2BE8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 4v11" /><path d="m7 11 5 5 5-5" /><path d="M4 19h16" /></svg>
+        </div>
+      </sc-for>
+    </div>
+
+    <div class="m-done-actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:22px">
+      <button onClick="{{ nada }}" style="flex:1;min-width:180px;font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:600;color:#fff;background:#16141F;border:none;border-radius:16px;padding:17px 22px;cursor:pointer" style-hover="background:#2E2A3D">Baixar todos</button>
+      <button onClick="{{ voltarEditar }}" style="font-family:inherit;font-size:15px;font-weight:600;color:#3D3A4C;background:#fff;border:1px solid #E4E2EC;border-radius:16px;padding:17px 22px;cursor:pointer" style-hover="background:#F7F6FB">Voltar a editar</button>
+    </div>
+    <div style="font-size:13px;color:#8B8898;text-align:center;margin-top:18px;line-height:1.5">Guarde os arquivos agora. Em 23 h este projeto é apagado automaticamente.</div>
+  </div>
+</main>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    // Tela apresentacional: a lista de downloads e os handlers vem do
+    // shell (Editor.dc.html).
+    return {};
+  }
+}
+</script>
+</body>
+</html>

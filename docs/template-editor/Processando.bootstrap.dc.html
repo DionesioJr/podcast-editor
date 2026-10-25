@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="global.css" />
+<style>
+  /* Exceções: raio/padding maiores que a escala padrão do Bootstrap e o
+     indicador de etapa (ponto colorido por estado) não têm componente
+     pronto no Bootstrap. */
+  .m-proc-card { border-radius:26px; }
+  .m-proc-title { font-family:var(--app-font-display); font-size:var(--fs-3xl); letter-spacing:-.025em; }
+  .m-etapa-dot { width:26px; height:26px; border:2px solid transparent; }
+  .m-etapa-dot--pendente { background:#fff; border-color:var(--bs-border-color); }
+  .m-etapa-dot--ativo { background:#fff; border-color:var(--bs-primary); }
+  .m-etapa-dot--feito { background:var(--bs-success); border-color:var(--bs-success); }
+  .m-etapa-pulse { width:9px; height:9px; background:var(--bs-primary); animation:pulseSoft 1s ease-in-out infinite; }
+  .progress-bar { background-color:var(--bs-primary); }
+
+  @media (max-width:560px) {
+    .m-proc-card { padding:24px 18px !important; border-radius:20px !important; }
+  }
+</style>
+</helmet>
+
+<main class="flex-grow-1 d-flex align-items-center justify-content-center p-4">
+  <div class="card m-proc-card shadow p-4" style="width:100%;max-width:560px">
+    <h2 class="m-proc-title fw-semibold mb-2">Preparando seu vídeo</h2>
+    <p class="text-secondary mb-4">Pode fechar esta página. Quando voltar, o trabalho continua de onde parou.</p>
+
+    <ul class="list-unstyled d-flex flex-column gap-1 mb-0">
+      <sc-for list="{{ etapas }}" as="e" hint-placeholder-count="4">
+        <li class="d-flex align-items-center gap-3 py-2">
+          <span class="m-etapa-dot m-etapa-dot--{{ e.estado }} rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+            <sc-if value="{{ e.estado === 'feito' }}" hint-placeholder-val="{{ false }}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7" /></svg>
+            </sc-if>
+            <sc-if value="{{ e.estado === 'ativo' }}" hint-placeholder-val="{{ false }}">
+              <span class="m-etapa-pulse rounded-circle d-block"></span>
+            </sc-if>
+          </span>
+          <span class="small {{ e.textoCls }}">{{ e.nome }}</span>
+          <span class="flex-grow-1"></span>
+          <span class="small text-body-tertiary">{{ e.tempo }}</span>
+        </li>
+      </sc-for>
+    </ul>
+
+    <div class="progress mt-4" role="progressbar" style="height:6px">
+      <div class="progress-bar" style="width:{{ progresso }}%"></div>
+    </div>
+  </div>
+</main>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;progresso&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:100,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    // Tela apresentacional: a lista de etapas e o progresso vem calculado
+    // pelo shell (Editor.bootstrap.dc.html), que roda o timer de simulacao.
+    // e.estado ("feito" | "ativo" | "pendente") e e.textoCls (classe de
+    // texto Bootstrap correspondente) chegam prontos do shell.
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="global.css" />
+<style>
+  /* Exceções: nenhuma delas é um valor de design fixo — são coisas que o
+     Bootstrap não tem componente pronto (controle segmentado, trilha de
+     timeline colorida por trecho, cor de marca sem variável Bootstrap
+     equivalente) ou valores calculados por item (peso de segmento, %). */
+  .m-editor-main { max-width:1280px; }
+  h1.m-heading, h2.m-heading { font-family:var(--app-font-display); letter-spacing:-.02em; }
+
+  .m-preview-box { background:linear-gradient(140deg,#2A2540,#1B1830); aspect-ratio:var(--m-ratio,16/9); max-width:var(--m-maxw,100%); }
+  .m-legenda-preview { font-family:var(--app-font-display); background:rgba(10,8,20,.78); }
+
+  .m-seg-group { background:var(--bs-secondary-bg,#F1F0F6); }
+  .m-seg-btn { border:none; background:transparent; color:var(--bs-secondary-color); }
+  .m-seg-btn.active { background:#fff; color:var(--bs-body-color); box-shadow:0 1px 3px rgba(22,20,31,.14); }
+
+  .m-timeline-track { height:22px; background:#EDEBF3; overflow:hidden; }
+  .m-timeline-neutral { background:#D8D5E4; }
+
+  .bg-accent { background-color:var(--app-accent) !important; }
+  .text-accent { color:var(--app-accent) !important; }
+  .m-strike { text-decoration-line:line-through; text-decoration-thickness:2px; }
+  .m-strike-pausa { text-decoration-color:var(--bs-primary); }
+  .m-strike-hesitacao { text-decoration-color:var(--app-accent); }
+  .m-strike-ia { text-decoration-color:var(--bs-warning); }
+  .m-strike-manual { text-decoration-color:var(--bs-info); }
+  .m-fundo-pausa { background:#F2F1F7; }
+  .m-fundo-hesitacao { background:#FDEAF3; }
+  .m-trans-item:hover { background:var(--bs-secondary-bg,#F1F0F6); }
+
+  .m-sug { border:1px solid var(--bs-border-color); background:#fff; }
+  .m-sug--aceita { background:rgba(var(--bs-success-rgb),.06); border-color:rgba(var(--bs-success-rgb),.35); }
+  .m-sug--recusada { background:var(--bs-secondary-bg,#FAFAFD); }
+  .m-badge-categoria { background:rgba(var(--bs-warning-rgb),.18); color:#92400E; }
+
+  .m-format-card { border:2px solid var(--bs-border-color); background:#fff; }
+  .m-format-card.active { border-color:var(--bs-primary); background:rgba(var(--bs-primary-rgb),.06); }
+
+  /* O build da CDN do Bootstrap fixa a cor de checkbox/progress no próprio
+     CSS do componente; repetimos a marca aqui pelo mesmo motivo do
+     .btn-primary em style.css. */
+  .form-check-input:checked { background-color:var(--bs-primary); border-color:var(--bs-primary); }
+  .form-check-input:focus { border-color:var(--bs-primary); box-shadow:0 0 0 .25rem rgba(var(--bs-primary-rgb),.25); }
+  .progress-bar { background-color:var(--bs-primary); }
+
+  @media (max-width:840px) {
+    .m-editor-main { padding:16px 14px 20px !important; gap:16px !important; }
+    .m-spacer { display:none !important; }
+    .m-seg-group { flex:1 1 100% !important; }
+    .m-seg-group > .btn { flex:1 1 0 !important; }
+    .m-trans-item { display:block !important; padding:11px 10px !important; margin:0 -6px 2px !important; border-radius:10px !important; border-bottom:1px solid var(--bs-secondary-bg,#F4F3F8) !important; }
+    .m-export-card, .m-export-progress { display:none !important; }
+    .m-mobilebar { display:block !important; }
+    .m-abas { display:flex !important; }
+    .m-pane { display:none !important; }
+    .aba-ferramentas .m-pane-ferramentas,
+    .aba-ia .m-pane-ia,
+    .aba-transcricao .m-pane-transcricao { display:block !important; }
+  }
+
+  @media (max-width:560px) {
+    .m-legenda-preview { font-size:13px !important; padding:5px 9px !important; }
+  }
+</style>
+</helmet>
+
+<main class="m-editor-main aba-{{ abaAtiva }} flex-grow-1 d-flex flex-wrap gap-4 align-items-start p-4 w-100 mx-auto">
+
+  <section class="d-flex flex-column gap-3" style="flex:1 1 420px;min-width:0">
+
+    <div class="card p-3">
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+        <div class="m-seg-group d-flex gap-1 rounded-3 p-1">
+          <button onClick="{{ verFinal }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ pFinalCls }}">Resultado final</button>
+          <button onClick="{{ verOriginal }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ pOrigCls }}">Original</button>
+        </div>
+        <div class="m-spacer flex-grow-1"></div>
+        <sc-if value="{{ doisFormatos }}" hint-placeholder-val="{{ false }}">
+          <div class="m-seg-group d-flex gap-1 rounded-3 p-1">
+            <button onClick="{{ preverH }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ fHCls }}">Horizontal</button>
+            <button onClick="{{ preverV }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ fVCls }}">Vertical</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <div class="m-preview-box position-relative rounded-3 overflow-hidden mx-auto" style="--m-ratio:{{ previewRatio }};--m-maxw:{{ previewMax }}">
+        <div class="position-absolute top-50 start-50 translate-middle rounded-circle bg-white d-flex align-items-center justify-content-center shadow" style="width:56px;height:56px">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="#16141F"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
+        </div>
+        <span class="position-absolute top-0 start-0 m-3 small fw-semibold text-white-50">pré-visualização do vídeo</span>
+        <sc-if value="{{ legendas }}" hint-placeholder-val="{{ true }}">
+          <div class="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center px-4 mb-4">
+            <span class="m-legenda-preview text-white fw-bold text-center rounded-2 px-3 py-2">para cada valor de x eu tenho um único resultado</span>
+          </div>
+        </sc-if>
+      </div>
+
+      <div class="d-flex align-items-center gap-3 mt-3">
+        <button onClick="{{ nada }}" class="btn btn-outline-secondary btn-sm rounded-3 flex-shrink-0 p-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="#16141F"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg></button>
+        <span class="small text-secondary flex-shrink-0" style="font-variant-numeric:tabular-nums">0:00</span>
+        <div class="flex-grow-1" style="min-width:0">
+          <div class="m-timeline-track d-flex rounded-2">
+            <sc-for list="{{ linha }}" as="t" hint-placeholder-count="14">
+              <div class="{{ t.cls }}" style="flex:{{ t.peso }}"></div>
+            </sc-for>
+          </div>
+        </div>
+        <span class="small text-secondary flex-shrink-0" style="font-variant-numeric:tabular-nums">{{ durFinal }}</span>
+      </div>
+
+      <div class="d-flex flex-wrap gap-3 mt-3">
+        <sc-for list="{{ legendaCores }}" as="l" hint-placeholder-count="4">
+          <span class="d-flex align-items-center gap-2 small text-secondary">
+            <span class="{{ l.cls }} rounded-1 d-inline-block" style="width:11px;height:11px"></span>{{ l.nome }}
+          </span>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="m-abas d-none gap-1 bg-secondary-bg rounded-3 p-1">
+      <button onClick="{{ abaFerramentas }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold flex-grow-1 {{ aFerrCls }}">Ferramentas</button>
+      <sc-if value="{{ ia }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ abaSugestoes }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold flex-grow-1 d-flex align-items-center justify-content-center gap-2 {{ aSugCls }}">
+          Sugestões
+          <sc-if value="{{ iaPendente }}" hint-placeholder-val="{{ true }}">
+            <span class="badge rounded-pill bg-warning text-dark">{{ iaPendentesN }}</span>
+          </sc-if>
+        </button>
+      </sc-if>
+      <button onClick="{{ abaTranscricao }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold flex-grow-1 {{ aTransCls }}">Transcrição</button>
+    </div>
+
+    <sc-if value="{{ ia }}" hint-placeholder-val="{{ false }}">
+      <div class="card m-pane m-pane-ia p-4">
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+          <h2 class="m-heading fs-4 fw-semibold flex-grow-1 mb-0">Sugestões da IA</h2>
+          <button onClick="{{ aceitarTodas }}" class="btn btn-dark btn-sm">Aceitar todas</button>
+          <button onClick="{{ recusarTodas }}" class="btn btn-outline-secondary btn-sm">Recusar todas</button>
+        </div>
+        <p class="small text-secondary mb-3">A IA pode errar. Nada é cortado sem você aceitar. {{ iaRestantesTexto }}.</p>
+
+        <div class="d-flex flex-column gap-3">
+          <sc-for list="{{ sugestoes }}" as="g" hint-placeholder-count="4">
+            <div class="m-sug {{ g.cardCls }} rounded-4 p-3">
+              <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                <span class="m-badge-categoria badge rounded-pill fw-bold text-uppercase" style="letter-spacing:.04em">{{ g.categoria }}</span>
+                <span class="small text-body-tertiary">{{ g.dur }}</span>
+                <div class="flex-grow-1"></div>
+                <span class="small fw-bold {{ g.estadoCls }}">{{ g.estadoTexto }}</span>
+              </div>
+              <div class="fst-italic" style="font-size:.90625rem;line-height:1.55">“{{ g.texto }}”</div>
+              <div class="small text-secondary mt-2">{{ g.motivo }}</div>
+              <div class="d-flex gap-2 mt-3">
+                <button onClick="{{ g.aceitar }}" class="btn btn-outline-success btn-sm">Aceitar corte</button>
+                <button onClick="{{ g.recusar }}" class="btn btn-outline-secondary btn-sm">Manter no vídeo</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <div class="card m-pane m-pane-transcricao p-4">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <h2 class="m-heading fs-4 fw-semibold flex-grow-1 mb-0">Transcrição</h2>
+        <button onClick="{{ desfazer }}" class="btn btn-outline-secondary btn-sm rounded-3 p-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3D3A4C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10H9" /></svg></button>
+      </div>
+      <p class="small text-secondary mb-3">Clique em uma frase para cortá-la do vídeo. Clique de novo para restaurar.</p>
+
+      <div class="d-flex flex-column gap-3">
+        <sc-for list="{{ blocos }}" as="b" hint-placeholder-count="3">
+          <div>
+            <div class="small fw-bold mb-1 {{ b.cls }}">{{ b.falante }}</div>
+            <div class="m-trans" style="font-size:.96875rem;line-height:1.75">
+              <sc-for list="{{ b.itens }}" as="i" hint-placeholder-count="4">
+                <span onClick="{{ i.clicar }}" class="m-trans-item rounded-1 px-1 {{ i.cls }}">{{ i.texto }} </span>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <aside class="d-flex flex-column gap-3" style="flex:1 1 320px;min-width:0">
+
+    <div class="card m-pane m-pane-ferramentas p-4">
+      <div class="small fw-bold text-uppercase text-body-tertiary mb-2" style="letter-spacing:.06em">Resumo</div>
+      <div class="d-flex align-items-baseline gap-2 flex-wrap">
+        <span class="m-heading fs-2 fw-bold">{{ durFinal }}</span>
+        <span class="text-body-tertiary text-decoration-line-through">{{ durOriginal }}</span>
+        <span class="badge rounded-pill text-bg-success">{{ durDelta }}</span>
+      </div>
+      <div class="d-flex flex-column gap-2 mt-3">
+        <sc-for list="{{ resumo }}" as="r" hint-placeholder-count="4">
+          <div class="d-flex align-items-center gap-2 small">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4F2BE8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="m5 13 4.5 4.5L19 7" /></svg>
+            <span>{{ r }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ semFormato }}" hint-placeholder-val="{{ false }}">
+        <div class="small fw-semibold text-danger mt-3">Escolha pelo menos um formato: horizontal ou vertical.</div>
+      </sc-if>
+      <sc-if value="{{ iaPendente }}" hint-placeholder-val="{{ false }}">
+        <div class="alert alert-warning small mt-3 mb-0 py-2 px-3">{{ iaPendenteTexto }}</div>
+      </sc-if>
+
+      <sc-if value="{{ exportando }}" hint-placeholder-val="{{ false }}">
+        <div class="m-export-progress mt-3">
+          <div class="d-flex justify-content-between small fw-semibold mb-2">
+            <span>Gerando seu vídeo…</span><span>{{ expPct }}%</span>
+          </div>
+          <div class="progress" style="height:6px">
+            <div class="progress-bar" style="width:{{ expPct }}%"></div>
+          </div>
+          <div class="small text-body-tertiary mt-2">Pode fechar a página. A exportação continua no seu link.</div>
+        </div>
+      </sc-if>
+
+      <button onClick="{{ exportar }}" disabled="{{ desabilitado }}" class="m-export-card m-heading btn btn-lg w-100 mt-3 {{ btnCls }}">{{ btnLabel }}</button>
+      <div class="small text-body-tertiary text-center mt-2">Seu arquivo original nunca é alterado.</div>
+    </div>
+
+    <div class="card m-pane m-pane-ferramentas p-4 pb-0">
+      <div class="small fw-bold text-uppercase text-body-tertiary mb-1" style="letter-spacing:.06em">Ferramentas</div>
+
+      <div onClick="{{ togglePausas }}" class="d-flex gap-3 py-3" style="cursor:pointer">
+        <input type="checkbox" class="form-check-input flex-shrink-0 mt-1" checked="{{ pausas }}" onChange="{{ nada }}" style="width:1.2em;height:1.2em" />
+        <div class="flex-grow-1" style="min-width:0">
+          <div class="fw-semibold" style="letter-spacing:-.01em">Cortar pausas</div>
+          <div class="small text-secondary mt-1">Remove silêncios e deixa o vídeo mais dinâmico.</div>
+          <sc-if value="{{ pausas }}" hint-placeholder-val="{{ true }}">
+            <div class="mt-3">
+              <div class="m-seg-group d-flex flex-wrap gap-1 rounded-3 p-1" style="width:fit-content;max-width:100%">
+                <button onClick="{{ nivelSuave }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ nSuaveCls }}">Suave</button>
+                <button onClick="{{ nivelEquil }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ nEquilCls }}">Equilibrado</button>
+                <button onClick="{{ nivelAgress }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ nAgressCls }}">Agressivo</button>
+              </div>
+              <div class="small text-body-tertiary mt-2">{{ dicaNivel }}</div>
+
+              <div onClick="{{ toggleHesit }}" class="d-flex gap-2 align-items-start mt-3 p-3 rounded-3 border bg-body-tertiary">
+                <input type="checkbox" class="form-check-input flex-shrink-0 mt-1" checked="{{ hesitacoes }}" onChange="{{ nada }}" />
+                <div>
+                  <div class="small fw-semibold">Remover hesitações</div>
+                  <div class="small text-secondary mt-1">Tira os "é…", "hã" e "hum".</div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <hr class="my-0" />
+
+      <div onClick="{{ toggleIA }}" class="d-flex gap-3 py-3" style="cursor:pointer">
+        <input type="checkbox" class="form-check-input flex-shrink-0 mt-1" checked="{{ ia }}" onChange="{{ nada }}" style="width:1.2em;height:1.2em" />
+        <div class="flex-grow-1" style="min-width:0">
+          <div class="fw-semibold" style="letter-spacing:-.01em">Corte inteligente com IA</div>
+          <div class="small text-secondary mt-1">Sugere o que cortar para deixar só o conteúdo bom. Você revisa ao lado.</div>
+        </div>
+      </div>
+
+      <hr class="my-0" />
+
+      <div onClick="{{ toggleLegendas }}" class="d-flex gap-3 py-3" style="cursor:pointer">
+        <input type="checkbox" class="form-check-input flex-shrink-0 mt-1" checked="{{ legendas }}" onChange="{{ nada }}" style="width:1.2em;height:1.2em" />
+        <div class="flex-grow-1" style="min-width:0">
+          <div class="fw-semibold" style="letter-spacing:-.01em">Legendas automáticas</div>
+          <div class="small text-secondary mt-1">Coloca legenda no vídeo automaticamente.</div>
+        </div>
+      </div>
+
+      <hr class="my-0" />
+
+      <div onClick="{{ toggleNivelar }}" class="d-flex gap-3 py-3" style="cursor:pointer">
+        <input type="checkbox" class="form-check-input flex-shrink-0 mt-1" checked="{{ nivelar }}" onChange="{{ nada }}" style="width:1.2em;height:1.2em" />
+        <div class="flex-grow-1" style="min-width:0">
+          <div class="fw-semibold" style="letter-spacing:-.01em">Nivelar volume</div>
+          <div class="small text-secondary mt-1">Deixa o volume das vozes parecido e agradável.</div>
+        </div>
+      </div>
+
+      <hr class="my-0" />
+
+      <div onClick="{{ toggleAumentar }}" class="d-flex gap-3 py-3" style="cursor:pointer">
+        <input type="checkbox" class="form-check-input flex-shrink-0 mt-1" checked="{{ aumentar }}" onChange="{{ nada }}" style="width:1.2em;height:1.2em" />
+        <div class="flex-grow-1" style="min-width:0">
+          <div class="fw-semibold" style="letter-spacing:-.01em">Aumentar volume</div>
+          <div class="small text-secondary mt-1">Deixa o som mais alto.</div>
+          <sc-if value="{{ aumentar }}" hint-placeholder-val="{{ false }}">
+            <div class="m-seg-group d-flex flex-wrap gap-1 rounded-3 p-1 mt-3" style="width:fit-content;max-width:100%">
+              <button onClick="{{ vol25 }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ v25Cls }}">+25%</button>
+              <button onClick="{{ vol50 }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ v50Cls }}">+50%</button>
+              <button onClick="{{ vol100 }}" class="m-seg-btn btn btn-sm rounded-2 fw-semibold {{ v100Cls }}">Dobrar</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <hr class="mt-0 mb-3" />
+
+      <div class="pb-3">
+        <div class="small fw-bold text-uppercase text-body-tertiary mb-2" style="letter-spacing:.06em">Formato de saída</div>
+        <div class="row g-2">
+          <div class="col-6 col-md-12 col-lg-6">
+            <div onClick="{{ toggleH }}" class="m-format-card {{ hCardCls }} rounded-4 p-3 d-flex gap-2 align-items-center" style="cursor:pointer">
+              <div class="{{ hIconCls }} rounded-1 flex-shrink-0" style="width:34px;height:20px"></div>
+              <div class="flex-grow-1" style="min-width:0">
+                <div class="small fw-semibold">Horizontal</div>
+                <div class="small text-secondary">YouTube · 16:9</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-12 col-lg-6">
+            <div onClick="{{ toggleV }}" class="m-format-card {{ vCardCls }} rounded-4 p-3 d-flex gap-2 align-items-center" style="cursor:pointer">
+              <div class="{{ vIconCls }} rounded-1 flex-shrink-0 mx-2" style="width:13px;height:22px"></div>
+              <div class="flex-grow-1" style="min-width:0">
+                <div class="small fw-semibold">Vertical</div>
+                <div class="small text-secondary">Reels · 9:16</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="m-mobilebar d-none position-sticky bottom-0 bg-white border-top p-3 shadow" style="z-index:30;padding-bottom:calc(1rem + env(safe-area-inset-bottom,0px)) !important">
+  <sc-if value="{{ exportando }}" hint-placeholder-val="{{ false }}">
+    <div class="d-flex justify-content-between small fw-semibold mb-2">
+      <span>Gerando seu vídeo…</span><span>{{ expPct }}%</span>
+    </div>
+    <div class="progress mb-2" style="height:4px">
+      <div class="progress-bar" style="width:{{ expPct }}%"></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ semFormato }}" hint-placeholder-val="{{ false }}">
+    <div class="small fw-semibold text-danger mb-2">Escolha pelo menos um formato: horizontal ou vertical.</div>
+  </sc-if>
+  <div class="d-flex align-items-center gap-3">
+    <div class="flex-shrink-0">
+      <div class="m-heading fs-5 fw-bold" style="line-height:1.1">{{ durFinal }}</div>
+      <div class="small fw-bold text-success mt-1">{{ durDelta }}</div>
+    </div>
+    <button onClick="{{ exportar }}" disabled="{{ desabilitado }}" class="m-heading btn btn-lg flex-grow-1 {{ btnCls }}" style="min-width:0">{{ btnLabel }}</button>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    // Tela apresentacional: todo o estado (ferramentas, IA, transcricao,
+    // exportacao) e calculado pelo shell (Editor.bootstrap.dc.html) e
+    // chega aqui ja resolvido via props, inclusive as classes Bootstrap
+    // dinamicas (ex.: pFinalCls, btnCls, g.cardCls).
+    return {};
+  }
+}
+</script>
+</body>
+</html>

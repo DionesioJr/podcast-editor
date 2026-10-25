@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="global.css" />
+<style>
+  @media (max-width:840px) {
+    .m-editor-main { padding:16px 14px 20px !important; gap:16px !important; }
+    .m-card { padding:16px !important; border-radius:20px !important; }
+    .m-card-tools { padding:16px 16px 4px !important; border-radius:20px !important; }
+    .m-segwrap { gap:8px !important; }
+    .m-spacer { display:none !important; }
+    .m-seg { flex:1 1 100% !important; }
+    .m-seg > button { flex:1 1 0 !important; padding:10px 8px !important; }
+    .m-pills { width:100% !important; }
+    .m-pills > button { flex:1 1 0 !important; padding:11px 6px !important; }
+    .m-ia-head > h2 { flex:1 1 100% !important; }
+    .m-ia-actions { flex:1 1 0 !important; padding:11px 10px !important; }
+    .m-sug-actions > button { flex:1 1 0 !important; padding:11px 10px !important; }
+    .m-trans { line-height:1.55 !important; }
+    .m-trans-item { display:block !important; padding:11px 10px !important; margin:0 -6px 2px !important; border-radius:10px !important; border-bottom:1px solid #F4F3F8 !important; }
+    .m-formatos { grid-template-columns:1fr 1fr !important; }
+    .m-export-card, .m-export-progress { display:none !important; }
+    .m-mobilebar { display:block !important; }
+    /* Abas: Ferramentas, Sugestoes e Transcricao dividem o mesmo espaco. */
+    .m-abas { display:flex !important; }
+    .m-pane { display:none !important; }
+    .aba-ferramentas .m-pane-ferramentas,
+    .aba-ia .m-pane-ia,
+    .aba-transcricao .m-pane-transcricao { display:block !important; }
+  }
+
+  @media (max-width:560px) {
+    .m-legenda-preview { font-size:13px !important; padding:5px 9px !important; }
+  }
+</style>
+</helmet>
+
+<main class="m-editor-main aba-{{ abaAtiva }}" style="flex:1;display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;padding:28px;max-width:1280px;width:100%;margin:0 auto">
+
+  <section style="flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:20px">
+
+    <div class="m-card" style="background:#fff;border:1px solid #E4E2EC;border-radius:24px;padding:18px">
+      <div class="m-segwrap" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
+        <div class="m-seg" style="display:flex;gap:4px;background:#F1F0F6;padding:4px;border-radius:12px">
+          <button onClick="{{ verFinal }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:9px;padding:7px 13px;cursor:pointer;background:{{ pFinalBg }};color:{{ pFinalFg }};box-shadow:{{ pFinalSh }}">Resultado final</button>
+          <button onClick="{{ verOriginal }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:9px;padding:7px 13px;cursor:pointer;background:{{ pOrigBg }};color:{{ pOrigFg }};box-shadow:{{ pOrigSh }}">Original</button>
+        </div>
+        <div class="m-spacer" style="flex:1"></div>
+        <sc-if value="{{ doisFormatos }}" hint-placeholder-val="{{ false }}">
+          <div class="m-seg" style="display:flex;gap:4px;background:#F1F0F6;padding:4px;border-radius:12px">
+            <button onClick="{{ preverH }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:9px;padding:7px 13px;cursor:pointer;background:{{ fHBg }};color:{{ fHFg }};box-shadow:{{ fHSh }}">Horizontal</button>
+            <button onClick="{{ preverV }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:9px;padding:7px 13px;cursor:pointer;background:{{ fVBg }};color:{{ fVFg }};box-shadow:{{ fVSh }}">Vertical</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="position:relative;border-radius:16px;overflow:hidden;background:linear-gradient(140deg,#2A2540,#1B1830);margin:0 auto;aspect-ratio:{{ previewRatio }};max-width:{{ previewMax }}">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+          <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -8px rgba(0,0,0,.5)">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="#16141F"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
+          </div>
+        </div>
+        <span style="position:absolute;top:12px;left:14px;font-size:12px;font-weight:600;letter-spacing:.03em;color:rgba(255,255,255,.62)">pré-visualização do vídeo</span>
+        <sc-if value="{{ legendas }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;left:0;right:0;bottom:9%;display:flex;justify-content:center;padding:0 7%">
+            <span class="m-legenda-preview" style="font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;color:#fff;text-align:center;line-height:1.3;background:rgba(10,8,20,.78);border-radius:9px;padding:7px 12px;text-wrap:balance">para cada valor de x eu tenho um único resultado</span>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+        <button onClick="{{ nada }}" class="m-tap" style="width:38px;height:38px;border-radius:12px;border:1px solid #E4E2EC;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none" style-hover="background:#F7F6FB"><svg width="16" height="16" viewBox="0 0 24 24" fill="#16141F"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg></button>
+        <span style="font-size:13px;color:#6B6879;font-variant-numeric:tabular-nums;flex:none">0:00</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;height:22px;border-radius:7px;overflow:hidden;background:#EDEBF3">
+            <sc-for list="{{ linha }}" as="t" hint-placeholder-count="14">
+              <div style="height:100%;flex:{{ t.peso }};background:{{ t.cor }}"></div>
+            </sc-for>
+          </div>
+        </div>
+        <span style="font-size:13px;color:#6B6879;font-variant-numeric:tabular-nums;flex:none">{{ durFinal }}</span>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:12px">
+        <sc-for list="{{ legendaCores }}" as="l" hint-placeholder-count="4">
+          <span style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#6B6879">
+            <span style="width:11px;height:11px;border-radius:3px;background:{{ l.cor }}"></span>{{ l.nome }}
+          </span>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Mobile: em vez de uma pagina unica e longa, o player fica fixo no topo
+         e o resto vira aba. No desktop as abas somem e tudo aparece junto. -->
+    <div class="m-abas" style="display:none;gap:4px;background:#F1F0F6;padding:4px;border-radius:14px">
+      <button onClick="{{ abaFerramentas }}" style="flex:1;min-width:0;font-family:inherit;font-size:13.5px;font-weight:600;border:none;border-radius:11px;padding:11px 6px;cursor:pointer;background:{{ aFerrBg }};color:{{ aFerrFg }};box-shadow:{{ aFerrSh }}">Ferramentas</button>
+      <sc-if value="{{ ia }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ abaSugestoes }}" style="flex:1;min-width:0;font-family:inherit;font-size:13.5px;font-weight:600;border:none;border-radius:11px;padding:11px 6px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;background:{{ aSugBg }};color:{{ aSugFg }};box-shadow:{{ aSugSh }}">
+          Sugestões
+          <sc-if value="{{ iaPendente }}" hint-placeholder-val="{{ true }}">
+            <span style="font-size:11px;font-weight:700;color:#fff;background:#B27A0B;border-radius:999px;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0 5px;flex:none">{{ iaPendentesN }}</span>
+          </sc-if>
+        </button>
+      </sc-if>
+      <button onClick="{{ abaTranscricao }}" style="flex:1;min-width:0;font-family:inherit;font-size:13.5px;font-weight:600;border:none;border-radius:11px;padding:11px 6px;cursor:pointer;background:{{ aTransBg }};color:{{ aTransFg }};box-shadow:{{ aTransSh }}">Transcrição</button>
+    </div>
+
+    <sc-if value="{{ ia }}" hint-placeholder-val="{{ false }}">
+      <div class="m-card m-pane m-pane-ia" style="background:#fff;border:1px solid #E4E2EC;border-radius:24px;padding:24px">
+        <div class="m-ia-head" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px">
+          <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:21px;font-weight:600;letter-spacing:-.02em;margin:0;flex:1;min-width:140px">Sugestões da IA</h2>
+          <button onClick="{{ aceitarTodas }}" class="m-ia-actions" style="font-family:inherit;font-size:13px;font-weight:600;color:#fff;background:#16141F;border:none;border-radius:11px;padding:9px 14px;cursor:pointer" style-hover="background:#2E2A3D">Aceitar todas</button>
+          <button onClick="{{ recusarTodas }}" class="m-ia-actions" style="font-family:inherit;font-size:13px;font-weight:600;color:#3D3A4C;background:#fff;border:1px solid #E4E2EC;border-radius:11px;padding:9px 14px;cursor:pointer" style-hover="background:#F7F6FB">Recusar todas</button>
+        </div>
+        <p style="margin:0 0 18px;font-size:13.5px;color:#6B6879;line-height:1.5">A IA pode errar. Nada é cortado sem você aceitar. {{ iaRestantesTexto }}.</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ sugestoes }}" as="g" hint-placeholder-count="4">
+            <div style="border-radius:18px;padding:16px;transition:all .15s;background:{{ g.bg }};border:1px solid {{ g.bd }}">
+              <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px">
+                <span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#92400E;background:#FEF3C7;border-radius:999px;padding:4px 9px">{{ g.categoria }}</span>
+                <span style="font-size:13px;color:#8B8898">{{ g.dur }}</span>
+                <div style="flex:1"></div>
+                <span style="font-size:12.5px;font-weight:700;color:{{ g.estadoCor }}">{{ g.estadoTexto }}</span>
+              </div>
+              <div style="font-size:14.5px;line-height:1.55;color:#16141F;font-style:italic">“{{ g.texto }}”</div>
+              <div style="font-size:13.5px;line-height:1.5;color:#6B6879;margin-top:7px">{{ g.motivo }}</div>
+              <div class="m-sug-actions" style="display:flex;gap:8px;margin-top:13px">
+                <button onClick="{{ g.aceitar }}" style="font-family:inherit;font-size:13px;font-weight:600;border:1px solid #CFEADD;border-radius:11px;padding:9px 14px;cursor:pointer;color:#12724D;background:#EAF7F1" style-hover="background:#D9F0E5">Aceitar corte</button>
+                <button onClick="{{ g.recusar }}" style="font-family:inherit;font-size:13px;font-weight:600;border:1px solid #E4E2EC;border-radius:11px;padding:9px 14px;cursor:pointer;color:#6B6879;background:#fff" style-hover="background:#F7F6FB">Manter no vídeo</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <div class="m-card m-pane m-pane-transcricao" style="background:#fff;border:1px solid #E4E2EC;border-radius:24px;padding:24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:21px;font-weight:600;letter-spacing:-.02em;margin:0;flex:1">Transcrição</h2>
+        <button onClick="{{ desfazer }}" class="m-tap" style="width:34px;height:34px;border-radius:11px;border:1px solid #E4E2EC;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F7F6FB"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3D3A4C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10H9" /></svg></button>
+      </div>
+      <p style="margin:0 0 18px;font-size:13.5px;color:#6B6879;line-height:1.5">Clique em uma frase para cortá-la do vídeo. Clique de novo para restaurar.</p>
+
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <sc-for list="{{ blocos }}" as="b" hint-placeholder-count="3">
+          <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:{{ b.cor }}">{{ b.falante }}</div>
+            <div class="m-trans" style="font-size:15.5px;line-height:1.75">
+              <sc-for list="{{ b.itens }}" as="i" hint-placeholder-count="4">
+                <span onClick="{{ i.clicar }}" class="m-trans-item" style="cursor:pointer;border-radius:5px;padding:1px 2px;transition:all .12s;color:{{ i.cor }};text-decoration:{{ i.deco }};text-decoration-color:{{ i.decoCor }};text-decoration-thickness:2px;background:{{ i.fundo }}" style-hover="background:#F1F0F6">{{ i.texto }} </span>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <aside style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:20px">
+
+    <div class="m-card m-pane m-pane-ferramentas" style="background:#fff;border:1px solid #E4E2EC;border-radius:24px;padding:22px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8B8898;margin-bottom:12px">Resumo</div>
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-size:34px;font-weight:700;letter-spacing:-.03em">{{ durFinal }}</span>
+        <span style="font-size:15px;color:#8B8898;text-decoration:line-through">{{ durOriginal }}</span>
+        <span style="font-size:14px;font-weight:700;color:#1F9D6B;background:#E7F6EF;border-radius:999px;padding:4px 10px">{{ durDelta }}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-top:16px">
+        <sc-for list="{{ resumo }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:9px;font-size:14px;color:#3D3A4C">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4F2BE8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m5 13 4.5 4.5L19 7" /></svg>
+            <span>{{ r }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ semFormato }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:16px;font-size:13.5px;font-weight:600;color:#C0392B">Escolha pelo menos um formato: horizontal ou vertical.</div>
+      </sc-if>
+      <sc-if value="{{ iaPendente }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:16px;padding:13px 15px;border-radius:14px;background:#FFF9EC;border:1px solid #F5E3B8;font-size:13px;line-height:1.5;color:#7A5A15">{{ iaPendenteTexto }}</div>
+      </sc-if>
+
+      <sc-if value="{{ exportando }}" hint-placeholder-val="{{ false }}">
+        <div class="m-export-progress" style="margin-top:18px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:#3D3A4C;margin-bottom:8px">
+            <span>Gerando seu vídeo…</span><span>{{ expPct }}%</span>
+          </div>
+          <div style="height:6px;border-radius:999px;background:#EDEBF3;overflow:hidden">
+            <div style="height:100%;background:#4F2BE8;border-radius:999px;transition:width .3s ease;width:{{ expPct }}%"></div>
+          </div>
+          <div style="font-size:12.5px;color:#8B8898;margin-top:9px;line-height:1.5">Pode fechar a página. A exportação continua no seu link.</div>
+        </div>
+      </sc-if>
+
+      <button onClick="{{ exportar }}" class="m-export-card" style="width:100%;margin-top:18px;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:600;letter-spacing:-.01em;border:none;border-radius:16px;padding:18px 22px;transition:all .15s;color:{{ btnFg }};background:{{ btnBg }};cursor:{{ btnCursor }};box-shadow:{{ btnSh }}">{{ btnLabel }}</button>
+      <div style="font-size:12.5px;color:#8B8898;text-align:center;line-height:1.5;margin-top:10px">Seu arquivo original nunca é alterado.</div>
+    </div>
+
+    <div class="m-card m-card-tools m-pane m-pane-ferramentas" style="background:#fff;border:1px solid #E4E2EC;border-radius:24px;padding:22px 22px 8px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8B8898;margin-bottom:6px">Ferramentas</div>
+
+      <div onClick="{{ togglePausas }}" style="display:flex;gap:13px;padding:14px 0;cursor:pointer">
+        <div style="width:22px;height:22px;border-radius:7px;flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:{{ boxPausasBg }};border:2px solid {{ boxPausasBd }}">
+          <sc-if value="{{ pausas }}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7" /></svg></sc-if>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15.5px;font-weight:600;letter-spacing:-.01em">Cortar pausas</div>
+          <div style="font-size:13.5px;color:#6B6879;margin-top:3px">Remove silêncios e deixa o vídeo mais dinâmico.</div>
+          <sc-if value="{{ pausas }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:14px">
+              <div class="m-pills" style="display:flex;flex-wrap:wrap;gap:6px;background:#F1F0F6;padding:4px;border-radius:13px;width:fit-content;max-width:100%">
+                <button onClick="{{ nivelSuave }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:10px;padding:8px 14px;cursor:pointer;transition:all .15s;background:{{ nSuaveBg }};color:{{ nSuaveFg }};box-shadow:{{ nSuaveSh }}">Suave</button>
+                <button onClick="{{ nivelEquil }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:10px;padding:8px 14px;cursor:pointer;transition:all .15s;background:{{ nEquilBg }};color:{{ nEquilFg }};box-shadow:{{ nEquilSh }}">Equilibrado</button>
+                <button onClick="{{ nivelAgress }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:10px;padding:8px 14px;cursor:pointer;transition:all .15s;background:{{ nAgressBg }};color:{{ nAgressFg }};box-shadow:{{ nAgressSh }}">Agressivo</button>
+              </div>
+              <div style="font-size:13px;color:#8B8898;margin-top:9px;line-height:1.45">{{ dicaNivel }}</div>
+
+              <div onClick="{{ toggleHesit }}" style="display:flex;gap:11px;align-items:flex-start;margin-top:14px;padding:12px 13px;border-radius:14px;border:1px solid #EDEBF3;background:#FBFAFD">
+                <div style="width:20px;height:20px;border-radius:6px;flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:{{ boxHesitBg }};border:2px solid {{ boxHesitBd }}">
+                  <sc-if value="{{ hesitacoes }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7" /></svg></sc-if>
+                </div>
+                <div>
+                  <div style="font-size:14px;font-weight:600">Remover hesitações</div>
+                  <div style="font-size:13px;color:#6B6879;margin-top:2px">Tira os “é…”, “hã” e “hum”.</div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="height:1px;background:#F1F0F6"></div>
+
+      <div onClick="{{ toggleIA }}" style="display:flex;gap:13px;padding:14px 0;cursor:pointer">
+        <div style="width:22px;height:22px;border-radius:7px;flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:{{ boxIABg }};border:2px solid {{ boxIABd }}">
+          <sc-if value="{{ ia }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7" /></svg></sc-if>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15.5px;font-weight:600;letter-spacing:-.01em">Corte inteligente com IA</div>
+          <div style="font-size:13.5px;color:#6B6879;margin-top:3px">Sugere o que cortar para deixar só o conteúdo bom. Você revisa ao lado.</div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:#F1F0F6"></div>
+
+      <div onClick="{{ toggleLegendas }}" style="display:flex;gap:13px;padding:14px 0;cursor:pointer">
+        <div style="width:22px;height:22px;border-radius:7px;flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:{{ boxLegBg }};border:2px solid {{ boxLegBd }}">
+          <sc-if value="{{ legendas }}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7" /></svg></sc-if>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15.5px;font-weight:600;letter-spacing:-.01em">Legendas automáticas</div>
+          <div style="font-size:13.5px;color:#6B6879;margin-top:3px">Coloca legenda no vídeo automaticamente.</div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:#F1F0F6"></div>
+
+      <div onClick="{{ toggleNivelar }}" style="display:flex;gap:13px;padding:14px 0;cursor:pointer">
+        <div style="width:22px;height:22px;border-radius:7px;flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:{{ boxNivBg }};border:2px solid {{ boxNivBd }}">
+          <sc-if value="{{ nivelar }}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7" /></svg></sc-if>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15.5px;font-weight:600;letter-spacing:-.01em">Nivelar volume</div>
+          <div style="font-size:13.5px;color:#6B6879;margin-top:3px">Deixa o volume das vozes parecido e agradável.</div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:#F1F0F6"></div>
+
+      <div onClick="{{ toggleAumentar }}" style="display:flex;gap:13px;padding:14px 0;cursor:pointer">
+        <div style="width:22px;height:22px;border-radius:7px;flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:{{ boxAumBg }};border:2px solid {{ boxAumBd }}">
+          <sc-if value="{{ aumentar }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7" /></svg></sc-if>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15.5px;font-weight:600;letter-spacing:-.01em">Aumentar volume</div>
+          <div style="font-size:13.5px;color:#6B6879;margin-top:3px">Deixa o som mais alto.</div>
+          <sc-if value="{{ aumentar }}" hint-placeholder-val="{{ false }}">
+            <div class="m-pills" style="display:flex;flex-wrap:wrap;gap:6px;background:#F1F0F6;padding:4px;border-radius:13px;width:fit-content;max-width:100%;margin-top:13px">
+              <button onClick="{{ vol25 }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:10px;padding:8px 14px;cursor:pointer;transition:all .15s;background:{{ v25Bg }};color:{{ v25Fg }};box-shadow:{{ v25Sh }}">+25%</button>
+              <button onClick="{{ vol50 }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:10px;padding:8px 14px;cursor:pointer;transition:all .15s;background:{{ v50Bg }};color:{{ v50Fg }};box-shadow:{{ v50Sh }}">+50%</button>
+              <button onClick="{{ vol100 }}" style="font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:10px;padding:8px 14px;cursor:pointer;transition:all .15s;background:{{ v100Bg }};color:{{ v100Fg }};box-shadow:{{ v100Sh }}">Dobrar</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="height:1px;background:#F1F0F6;margin-bottom:16px"></div>
+
+      <div style="padding-bottom:14px">
+        <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8B8898;margin-bottom:12px">Formato de saída</div>
+        <div class="m-formatos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+          <div onClick="{{ toggleH }}" style="cursor:pointer;border-radius:16px;padding:14px;display:flex;gap:11px;align-items:center;transition:all .15s;background:{{ hBg }};border:2px solid {{ hBd }}">
+            <div style="width:34px;height:20px;border-radius:5px;flex:none;background:{{ hIco }}"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:600">Horizontal</div>
+              <div style="font-size:12.5px;color:#6B6879;margin-top:2px">YouTube · 16:9</div>
+            </div>
+          </div>
+          <div onClick="{{ toggleV }}" style="cursor:pointer;border-radius:16px;padding:14px;display:flex;gap:11px;align-items:center;transition:all .15s;background:{{ vBg }};border:2px solid {{ vBd }}">
+            <div style="width:13px;height:22px;border-radius:4px;flex:none;margin:0 10px;background:{{ vIco }}"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:600">Vertical</div>
+              <div style="font-size:12.5px;color:#6B6879;margin-top:2px">Reels · 9:16</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- Mobile: em coluna unica o botao principal ficaria depois da transcricao
+     inteira. Aqui ele vira barra fixa, com a duracao final atualizando ao vivo. -->
+<div class="m-mobilebar" style="display:none;position:sticky;bottom:0;z-index:30;background:#fff;border-top:1px solid #E4E2EC;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 26px -18px rgba(22,20,31,.7)">
+  <sc-if value="{{ exportando }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:#3D3A4C;margin-bottom:6px">
+      <span>Gerando seu vídeo…</span><span>{{ expPct }}%</span>
+    </div>
+    <div style="height:4px;border-radius:999px;background:#EDEBF3;overflow:hidden;margin-bottom:10px">
+      <div style="height:100%;background:#4F2BE8;border-radius:999px;transition:width .3s ease;width:{{ expPct }}%"></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ semFormato }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:13px;font-weight:600;color:#C0392B;line-height:1.4;margin-bottom:9px">Escolha pelo menos um formato: horizontal ou vertical.</div>
+  </sc-if>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="flex:none">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.02em;line-height:1.1">{{ durFinal }}</div>
+      <div style="font-size:12px;font-weight:700;color:#1F9D6B;margin-top:2px">{{ durDelta }}</div>
+    </div>
+    <button onClick="{{ exportar }}" style="flex:1;min-width:0;font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:600;letter-spacing:-.01em;border:none;border-radius:14px;padding:15px 16px;color:{{ btnFg }};background:{{ btnBg }};cursor:{{ btnCursor }}">{{ btnLabel }}</button>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    // Tela apresentacional: todo o estado (ferramentas, IA, transcricao,
+    // exportacao) e calculado pelo shell (Editor.dc.html) e chega aqui
+    // ja resolvido via props.
+    return {};
+  }
+}
+</script>
+</body>
+</html>

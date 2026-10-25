@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="global.css" />
+<style>
+  /* Exceção: título com a fonte de destaque do projeto. */
+  .m-done-title { font-family:var(--app-font-display); font-size:var(--fs-3xl); letter-spacing:-.03em; }
+  .m-done-tag { width:42px; height:42px; font-size:11px; font-weight:700; letter-spacing:.04em; }
+  /* Tons de marca (roxo/rosa) sem variável -subtle equivalente no Bootstrap padrão. */
+  .m-tag-h { background:rgba(var(--bs-primary-rgb),.12); color:var(--bs-primary); }
+  .m-tag-v { background:rgba(var(--app-accent-rgb),.12); color:var(--app-accent); }
+  .m-tag-neutral { background:var(--bs-secondary-bg,#F4F3F8); color:var(--bs-secondary-color); }
+
+  @media (max-width:840px) {
+    .m-done-actions > .btn { flex:1 1 100% !important; }
+  }
+  @media (max-width:560px) {
+    .m-done-title { font-size:23px !important; }
+  }
+</style>
+</helmet>
+
+<main class="flex-grow-1 d-flex align-items-center justify-content-center p-4">
+  <div style="width:100%;max-width:600px">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <div class="rounded-4 bg-success-subtle d-flex align-items-center justify-content-center flex-shrink-0" style="width:46px;height:46px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7" /></svg>
+      </div>
+      <div>
+        <h2 class="m-done-title fw-bold mb-0">Seu vídeo está pronto</h2>
+        <div class="text-secondary small mt-1">{{ durFinal }} · sem marca d'água · disponível por 23 h</div>
+      </div>
+    </div>
+
+    <div class="list-group">
+      <sc-for list="{{ downloads }}" as="d" hint-placeholder-count="3">
+        <div class="list-group-item list-group-item-action d-flex align-items-center gap-3 rounded-4 mb-2 border py-3 px-3" style="cursor:pointer">
+          <div class="m-done-tag rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 {{ d.badgeCls }}">{{ d.tag }}</div>
+          <div class="flex-grow-1 text-truncate">
+            <div class="fw-semibold text-truncate">{{ d.nome }}</div>
+            <div class="small text-secondary mt-1">{{ d.detalhe }}</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F2BE8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 4v11" /><path d="m7 11 5 5 5-5" /><path d="M4 19h16" /></svg>
+        </div>
+      </sc-for>
+    </div>
+
+    <div class="m-done-actions d-flex flex-wrap gap-2 mt-3">
+      <button onClick="{{ nada }}" class="btn btn-dark btn-lg flex-grow-1" style="min-width:180px">Baixar todos</button>
+      <button onClick="{{ voltarEditar }}" class="btn btn-outline-secondary btn-lg">Voltar a editar</button>
+    </div>
+    <div class="small text-body-tertiary text-center mt-3">Guarde os arquivos agora. Em 23 h este projeto é apagado automaticamente.</div>
+  </div>
+</main>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    // Tela apresentacional: a lista de downloads e os handlers vem do
+    // shell (Editor.bootstrap.dc.html). d.badgeCls e uma classe utilitária
+    // do Bootstrap (bg-*-subtle text-*-emphasis) calculada lá.
+    return {};
+  }
+}
+</script>
+</body>
+</html>

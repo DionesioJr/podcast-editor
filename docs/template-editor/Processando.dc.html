@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="global.css" />
+<style>
+  @media (max-width:560px) {
+    .m-proc-card { padding:24px 18px !important; border-radius:20px !important; }
+  }
+</style>
+</helmet>
+
+<main style="flex:1;display:flex;align-items:center;justify-content:center;padding:56px 24px">
+  <div class="m-proc-card" style="width:100%;max-width:560px;background:#fff;border:1px solid #E4E2EC;border-radius:26px;padding:40px;box-shadow:0 20px 50px -30px rgba(22,20,31,.35);animation:riseIn .35s ease both">
+    <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:27px;font-weight:600;letter-spacing:-.025em;margin:0 0 8px">Preparando seu vídeo</h2>
+    <p style="margin:0 0 30px;font-size:15px;color:#6B6879;line-height:1.5">Pode fechar esta página. Quando voltar, o trabalho continua de onde parou.</p>
+
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <sc-for list="{{ etapas }}" as="e" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:14px;padding:13px 0">
+          <div style="width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:{{ e.bg }};border:2px solid {{ e.bd }}">
+            <span style="color:{{ e.fg }};display:flex">{{ e.icone }}</span>
+          </div>
+          <span style="font-size:15.5px;font-weight:{{ e.peso }};color:{{ e.cor }}">{{ e.nome }}</span>
+          <div style="flex:1"></div>
+          <span style="font-size:13px;color:#8B8898">{{ e.tempo }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="height:6px;border-radius:999px;background:#EDEBF3;overflow:hidden;margin-top:26px">
+      <div style="height:100%;background:#4F2BE8;border-radius:999px;transition:width .35s ease;width:{{ progresso }}%"></div>
+    </div>
+  </div>
+</main>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;progresso&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:100,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    // Tela apresentacional: a lista de etapas e o progresso vem calculado
+    // pelo shell (Editor.dc.html), que roda o timer de simulacao.
+    return {};
+  }
+}
+</script>
+</body>
+</html>

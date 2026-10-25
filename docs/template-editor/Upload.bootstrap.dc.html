@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="global.css" />
+<style>
+  /* Exceções: escala tipográfica do design (var(--fs-*)) e o ícone de
+     upload com gradiente/sombra de marca não têm equivalente no Bootstrap. */
+  .m-upload-main { padding-top:56px; padding-bottom:72px; }
+  .m-upload-drop-wrap { max-width:720px; cursor:pointer; }
+  .m-upload-h1 { font-family:var(--app-font-display); font-size:var(--fs-5xl); line-height:1.08; letter-spacing:-.03em; max-width:16ch; text-wrap:balance; }
+  .m-upload-sub { font-size:var(--fs-lg); max-width:46ch; text-wrap:pretty; }
+  .m-drop { transition:all .18s ease; background:#fff; border:2px dashed var(--bs-border-color); }
+  .m-drop--dragging { background:#EEE9FF; border-color:var(--bs-primary); }
+  .m-drop-icon { width:74px; height:74px; background:var(--bs-primary); box-shadow:0 12px 28px -10px rgba(var(--bs-primary-rgb),.6); }
+  .m-drop-title { font-family:var(--app-font-display); font-size:var(--fs-2xl); letter-spacing:-.02em; }
+
+  @media (max-width:560px) {
+    .m-upload-main { padding:28px 18px 40px !important; }
+    .m-upload-h1 { font-size:29px !important; max-width:none !important; margin-bottom:12px !important; }
+    .m-upload-sub { font-size:15px !important; margin-bottom:24px !important; }
+    .m-drop { padding:34px 18px !important; border-radius:22px !important; }
+    .m-drop-icon { width:58px !important; height:58px !important; border-radius:18px !important; margin-bottom:18px !important; }
+    .m-drop-title { font-size:20px !important; }
+  }
+</style>
+</helmet>
+
+<main class="m-upload-main flex-grow-1 d-flex flex-column align-items-center justify-content-center px-3">
+  <h1 class="m-upload-h1 fw-bold text-center mb-3">Envie seu vídeo para começar</h1>
+  <p class="m-upload-sub text-center text-secondary mb-4">Cortamos as pausas, legendamos e ajustamos o volume do seu podcast ou da sua aula. Sem cadastro, sem pagar.</p>
+
+  <label class="m-upload-drop-wrap w-100">
+    <input type="file" accept="video/*" onChange="{{ aoEscolher }}" class="visually-hidden" />
+    <div onDragOver="{{ aoArrastar }}" onDragLeave="{{ aoSair }}" onDrop="{{ aoSoltar }}" class="m-drop {{ dropCls }} rounded-5 p-5 text-center">
+      <div class="m-drop-icon rounded-4 d-flex align-items-center justify-content-center mx-auto mb-4">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17V5" /><path d="m6.5 10.5 5.5-5.5 5.5 5.5" /><path d="M4 18v1.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V18" /></svg>
+      </div>
+      <div class="m-drop-title fw-semibold mb-2"><span class="d-only">Arraste seu vídeo aqui</span><span class="m-only">Escolha um vídeo do seu celular</span></div>
+      <div class="text-secondary mb-4"><span class="d-only">ou clique para escolher um arquivo</span><span class="m-only">da galeria ou gravado na hora</span></div>
+      <span class="btn btn-dark rounded-3 px-4 py-3 fw-semibold">Escolher vídeo</span>
+      <div class="small text-body-tertiary mt-4">MP4, MOV, MKV, WEBM ou AVI · até 2 GB · até 2 horas</div>
+    </div>
+  </label>
+
+  <div class="d-flex align-items-center gap-2 mt-4 small text-secondary">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4.2 2.8 7.9 7 9 4.2-1.1 7-4.8 7-9V6l-7-3Z" /></svg>
+    Seu vídeo é privado e será apagado automaticamente em 24 horas.
+  </div>
+</main>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;dropCls&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    // Tela apresentacional: estado de arrastar-e-soltar e os handlers de
+    // upload vivem no shell (Editor.dc.html) e chegam aqui como props.
+    // dropCls substitui dropBg/dropBd: o shell passa "m-drop--dragging"
+    // quando o usuário está arrastando um arquivo sobre a área.
+    return {};
+  }
+}
+</script>
+</body>
+</html>

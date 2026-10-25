@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="global.css" />
+<style>
+  @media (max-width:560px) {
+    .m-upload-main { padding:28px 18px 40px !important; }
+    .m-upload-h1 { font-size:29px !important; max-width:none !important; margin-bottom:12px !important; }
+    .m-upload-sub { font-size:15px !important; margin-bottom:24px !important; }
+    .m-drop { padding:34px 18px !important; border-radius:22px !important; }
+    .m-drop-icon { width:58px !important; height:58px !important; border-radius:18px !important; margin-bottom:18px !important; }
+    .m-drop-title { font-size:20px !important; }
+  }
+</style>
+</helmet>
+
+<main class="m-upload-main" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px 72px">
+  <h1 class="m-upload-h1" style="font-family:'Bricolage Grotesque',sans-serif;font-size:44px;line-height:1.08;font-weight:700;letter-spacing:-.03em;margin:0 0 14px;text-align:center;text-wrap:balance;max-width:16ch">Envie seu vídeo para começar</h1>
+  <p class="m-upload-sub" style="margin:0 0 36px;font-size:17px;line-height:1.5;color:#6B6879;text-align:center;max-width:46ch;text-wrap:pretty">Cortamos as pausas, legendamos e ajustamos o volume do seu podcast ou da sua aula. Sem cadastro, sem pagar.</p>
+
+  <label style="width:100%;max-width:720px;cursor:pointer;display:block">
+    <input type="file" accept="video/*" onChange="{{ aoEscolher }}" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" />
+    <div onDragOver="{{ aoArrastar }}" onDragLeave="{{ aoSair }}" onDrop="{{ aoSoltar }}" class="m-drop" style="border-radius:26px;padding:64px 40px;text-align:center;transition:all .18s ease;background:{{ dropBg }};border:2px dashed {{ dropBd }}">
+      <div class="m-drop-icon" style="width:74px;height:74px;border-radius:22px;background:#4F2BE8;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:0 12px 28px -10px rgba(79,43,232,.6)">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17V5" /><path d="m6.5 10.5 5.5-5.5 5.5 5.5" /><path d="M4 18v1.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V18" /></svg>
+      </div>
+      <div class="m-drop-title" style="font-family:'Bricolage Grotesque',sans-serif;font-size:24px;font-weight:600;letter-spacing:-.02em;margin-bottom:8px"><span class="d-only">Arraste seu vídeo aqui</span><span class="m-only">Escolha um vídeo do seu celular</span></div>
+      <div style="font-size:15px;color:#6B6879;margin-bottom:26px"><span class="d-only">ou clique para escolher um arquivo</span><span class="m-only">da galeria ou gravado na hora</span></div>
+      <span style="display:inline-block;font-family:inherit;font-size:15px;font-weight:600;color:#fff;background:#16141F;border-radius:14px;padding:14px 28px" style-hover="background:#2E2A3D">Escolher vídeo</span>
+      <div style="margin-top:28px;font-size:13px;color:#8B8898">MP4, MOV, MKV, WEBM ou AVI · até 2 GB · até 2 horas</div>
+    </div>
+  </label>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-top:26px;font-size:13.5px;color:#6B6879">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4.2 2.8 7.9 7 9 4.2-1.1 7-4.8 7-9V6l-7-3Z" /></svg>
+    Seu vídeo é privado e será apagado automaticamente em 24 horas.
+  </div>
+</main>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;dropBg&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#fff&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dropBd&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#D8D5E4&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    // Tela apresentacional: estado de arrastar-e-soltar e os handlers de
+    // upload vivem no shell (Editor.dc.html) e chegam aqui como props.
+    return {};
+  }
+}
+</script>
+</body>
+</html>

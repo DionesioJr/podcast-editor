@@ -1,0 +1,100 @@
+/* style.css — TEMA da aplicação.
+   Este é o único arquivo que deve ser editado para trocar cores, raios,
+   espaçamento e tipografia. Ele sobrescreve as variáveis do Bootstrap
+   (importado em global.css) — não precisa recompilar nada. */
+
+:root {
+  /* ---- Cores de marca (mapeadas para as variáveis do Bootstrap) ---- */
+  --bs-primary: #4F2BE8;
+  --bs-primary-rgb: 79, 43, 232;
+  --bs-secondary: #6B6879;
+  --bs-secondary-rgb: 107, 104, 121;
+  --bs-success: #1F9D6B;
+  --bs-success-rgb: 31, 157, 107;
+  --bs-danger: #C0392B;
+  --bs-danger-rgb: 192, 57, 43;
+  --bs-warning: #B27A0B;
+  --bs-warning-rgb: 178, 122, 11;
+  --bs-info: #0EA5E9;
+  --bs-info-rgb: 14, 165, 233;
+  --bs-light: #F4F3F8;
+  --bs-light-rgb: 244, 243, 248;
+  --bs-dark: #16141F;
+  --bs-dark-rgb: 22, 20, 31;
+
+  /* Cor de destaque sem equivalente direto no Bootstrap (hesitação, IA, etc.) */
+  --app-accent: #E8388F;
+  --app-accent-rgb: 232, 56, 143;
+
+  /* ---- Tipografia ---- */
+  --bs-body-font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --app-font-display: 'Bricolage Grotesque', sans-serif;
+  --bs-body-color: #16141F;
+  --bs-body-bg: #F1F0F6;
+  --bs-secondary-color: #6B6879;
+  --bs-tertiary-color: #8B8898;
+  --bs-body-font-size: .9375rem;
+  --bs-body-line-height: 1.5;
+
+  /* Escala de tamanho de fonte usada nas telas (var(--fs-*)) */
+  --fs-xs:   .8125rem;  /* 13px  */
+  --fs-sm:   .875rem;   /* 14px  */
+  --fs-base: .9375rem;  /* 15px  */
+  --fs-md:   1rem;      /* 16px  */
+  --fs-lg:   1.125rem;  /* 18px  */
+  --fs-xl:   1.3125rem; /* 21px  */
+  --fs-2xl:  1.5rem;    /* 24px  */
+  --fs-3xl:  1.75rem;   /* 28px  */
+  --fs-4xl:  2.125rem;  /* 34px  */
+  --fs-5xl:  2.75rem;   /* 44px  */
+
+  /* ---- Bordas e raios ---- */
+  --bs-border-color: #E4E2EC;
+  --bs-border-radius-sm: .5rem;
+  --bs-border-radius: .75rem;
+  --bs-border-radius-lg: 1rem;
+  --bs-border-radius-xl: 1.25rem;
+  --bs-border-radius-xxl: 1.5rem;
+  --bs-border-radius-pill: 999px;
+
+  /* ---- Espaçamento (escala 4px usada nas telas, var(--space-*)) ---- */
+  --space-1: .25rem;  /* 4px  */
+  --space-2: .5rem;   /* 8px  */
+  --space-3: .75rem;  /* 12px */
+  --space-4: 1rem;    /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem;  /* 24px */
+  --space-7: 2rem;    /* 32px */
+  --space-8: 2.5rem;  /* 40px */
+
+  /* ---- Breakpoints de referência (documental — @media não lê var()) ---- */
+  /* mobile: até 560px · tablet: até 840px */
+
+  /* ---- Links ---- */
+  --bs-link-color: var(--bs-primary);
+  --bs-link-color-rgb: var(--bs-primary-rgb);
+  --bs-link-hover-color: #3A1DB8;
+  --bs-link-hover-color-rgb: 58, 29, 184;
+}
+
+/* Os componentes "filled" do Bootstrap (build da CDN) fixam a cor no
+   próprio CSS do componente, então repetimos a marca aqui para os que a
+   aplicação usa — assim trocar --bs-primary acima já é suficiente. */
+.btn-primary {
+  --bs-btn-bg: var(--bs-primary);
+  --bs-btn-border-color: var(--bs-primary);
+  --bs-btn-hover-bg: var(--bs-link-hover-color);
+  --bs-btn-hover-border-color: var(--bs-link-hover-color);
+  --bs-btn-active-bg: var(--bs-link-hover-color);
+  --bs-btn-active-border-color: var(--bs-link-hover-color);
+  --bs-btn-disabled-bg: var(--bs-primary);
+  --bs-btn-disabled-border-color: var(--bs-primary);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--bs-primary);
+  --bs-btn-border-color: var(--bs-primary);
+  --bs-btn-hover-bg: var(--bs-primary);
+  --bs-btn-hover-border-color: var(--bs-primary);
+  --bs-btn-active-bg: var(--bs-primary);
+  --bs-btn-active-border-color: var(--bs-primary);
+}
