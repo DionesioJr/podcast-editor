@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import jestConfig from './jest.config';
+import metroConfig from './metro.config';
 
 const tsconfig = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'tsconfig.json'), 'utf-8'),
@@ -63,6 +64,20 @@ describe('Alias no Jest (PDE-6)', () => {
       '^@/(.*)$',
       '^@src/(.*)$',
     ]);
+  });
+});
+
+describe('Alias no Metro (PDE-6)', () => {
+  it('resolve @/* para a raiz do app em tempo de bundling', () => {
+    expect(metroConfig.resolver?.extraNodeModules?.['@']).toBe(
+      path.join(__dirname),
+    );
+  });
+
+  it('resolve @src/* para a pasta src em tempo de bundling', () => {
+    expect(metroConfig.resolver?.extraNodeModules?.['@src']).toBe(
+      path.join(__dirname, 'src'),
+    );
   });
 });
 
