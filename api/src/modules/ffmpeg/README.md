@@ -18,6 +18,7 @@ const observable = this.ffmpeg.run([
   'output.mp4'
 ], {
   timeoutMs: 3600000,
+  durationMs: 120000,
   shouldCancel: () => jobCanceledInDatabase,
 });
 
@@ -52,6 +53,7 @@ Executa um comando FFmpeg com spawn direto (sem shell) e retorna um Observable q
 - `command`: Array de argumentos do FFmpeg (sem incluir 'ffmpeg' ou 'ffprobe')
 - `options`: Configurações opcionais
   - `timeoutMs`: Timeout em milissegundos (padrão: 3600000)
+  - `durationMs`: Duração em milissegundos do vídeo de entrada (necessário para calcular progresso 0-100)
   - `shouldCancel`: Função callback que retorna true para cancelar
   - `checkCancelIntervalMs`: Intervalo em ms para verificar cancelamento (padrão: 1000)
 

@@ -17,6 +17,7 @@ export class FfmpegService {
     const checkCancelIntervalMs =
       options.checkCancelIntervalMs ?? this.DEFAULT_CHECK_CANCEL_INTERVAL_MS;
     const shouldCancel = options.shouldCancel ?? (() => false);
+    const durationMs = options.durationMs;
 
     return new Observable<ProgressEvent>(observer => {
       let process: ChildProcess | null = null;
@@ -59,7 +60,7 @@ export class FfmpegService {
               if (key === 'progress') {
                 const now = Date.now();
                 if (now - lastProgressTime >= 500) {
-                  const progress = this.calculateProgress(progressMetrics);
+                  const progress = this.calculateProgress(progressMetrics, durationMs);
                   if (progress >= 0) {
                     observer.next({ progress });
                     lastProgressTime = now;
@@ -132,25 +133,28 @@ export class FfmpegService {
     });
   }
 
-  private calculateProgress(metrics: Record<string, string | number>): number {
+  private calculateProgress(
+    metrics: Record<string, string | number>,
+    durationMs?: number,
+  ): number {
     if (metrics.progress === 'end') {
       return 100;
     }
 
-    const timeStr = metrics.out_time_ms;
-    const durationStr = metrics.progress_duration;
+    if (!durationMs || durationMs <= 0) {
+      return -1;
+    }
 
-    if (!timeStr || !durationStr) {
+    const timeStr = metrics.out_time_ms;
+    if (!timeStr) {
       return -1;
     }
 
     const time = parseInt(String(timeStr), 10);
-    const duration = parseInt(String(durationStr), 10);
-
-    if (duration <= 0 || isNaN(time) || isNaN(duration)) {
+    if (isNaN(time)) {
       return -1;
     }
 
-    return Math.min(100, Math.round((time / duration) * 100));
+    return Math.min(100, Math.round((time / durationMs) * 100));
   }
 }

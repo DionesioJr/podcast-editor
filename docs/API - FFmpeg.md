@@ -15,6 +15,8 @@ O módulo FFmpeg (`@/modules/ffmpeg`) é responsável pela execução segura de 
 
 Executa um comando FFmpeg com argumentos validados e separados.
 
+**Nota sobre progresso**: O Observable só emite progresso (0-100) quando `durationMs` é fornecido em ExecOptions. FFmpeg emite `out_time_ms` (tempo decorrido), e a duração é necessária para calcular a percentagem. Se `durationMs` não for fornecido, o Observable não emitirá eventos de progresso intermediários (apenas 0% no início e 100% ao fim).
+
 ## Integração com a Fila de Jobs
 
 O job handler (em `PDE-19`) chama o módulo FFmpeg e recebe um Observable:
@@ -22,6 +24,7 @@ O job handler (em `PDE-19`) chama o módulo FFmpeg e recebe um Observable:
 ```typescript
 const observable = this.ffmpeg.run(args, {
   timeoutMs: 3600000,
+  durationMs: videoDurationMs,
   shouldCancel: () => jobStatus === 'canceled',
 });
 
