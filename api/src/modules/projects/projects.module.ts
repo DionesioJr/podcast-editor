@@ -4,11 +4,13 @@ import { SharedModule } from '@/shared/shared.module';
 
 import { ProjectsRepository } from './repositories/projects.repository';
 
+export const IProjectsRepository = Symbol('IProjectsRepository');
+
 @Module({
   imports: [SharedModule],
   providers: [
     {
-      provide: 'IProjectsRepository',
+      provide: IProjectsRepository,
       useClass: ProjectsRepository,
     },
   ],

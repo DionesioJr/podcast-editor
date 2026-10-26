@@ -27,7 +27,7 @@ export class ProjectsRepository implements IProjectsRepository {
       const project = await this.prisma.projects.findUnique({ where: { id } });
       return project;
     } catch (error) {
-      this.logger.error(`Erro ao buscar projeto ${id}: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(`Erro ao buscar projeto: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
