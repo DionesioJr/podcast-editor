@@ -11,10 +11,17 @@ export const colors = {
   dark: '#16141F',
   background: '#F1F0F6',
   border: '#E4E2EC',
+  white: '#fff',
   text: {
     primary: '#16141F',
     secondary: '#6B6879',
     tertiary: '#8B8898',
+  },
+  alert: {
+    info: { bg: '#E0F2FE', text: '#075985' },
+    warning: { bg: '#FEF3C7', text: '#92400E' },
+    danger: { bg: '#FEE2E2', text: '#7F1D1D' },
+    success: { bg: '#DCFCE7', text: '#15803D' },
   },
 };
 
