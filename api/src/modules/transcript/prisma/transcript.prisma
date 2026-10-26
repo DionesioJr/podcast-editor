@@ -1,0 +1,6 @@
+model transcripts {
+  project_id String   @id @db.Char(36)
+  words      String   @db.LongText
+  sentences  String   @db.LongText
+  pauses     String   @db.LongText
+}
