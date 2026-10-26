@@ -29,6 +29,8 @@ model projects {
   exports_used       Int      @default(0) @db.UnsignedInt
   expires_at         DateTime @db.DateTime(0)
 
+  transcripts        transcripts[]  @relation("ProjectTranscripts")
+
   @@index([token_hash])
   @@index([ip_hash])
   @@index([status])
@@ -36,8 +38,10 @@ model projects {
 }
 
 model transcripts {
-  project_id String   @id @db.Char(36)
-  words      String   @db.LongText
-  sentences  String   @db.LongText
-  pauses     String   @db.LongText
+  project_id String    @id @db.Char(36)
+  words      String    @db.LongText
+  sentences  String    @db.LongText
+  pauses     String    @db.LongText
+
+  project    projects? @relation("ProjectTranscripts", fields: [project_id], references: [id], onDelete: Cascade)
 }
