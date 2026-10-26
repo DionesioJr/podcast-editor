@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'podcast-api',
-      script: 'dist/src/main.js',
+      script: 'dist/main.js',
       autorestart: true,
       exp_backoff_restart_delay: 100,
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
@@ -14,7 +14,7 @@ module.exports = {
     },
     {
       name: 'podcast-worker',
-      script: 'dist/src/worker.js',
+      script: 'dist/worker.js',
       autorestart: true,
       exp_backoff_restart_delay: 100,
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
