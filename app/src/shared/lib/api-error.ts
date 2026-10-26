@@ -13,9 +13,5 @@ export function handleApiError(error: unknown): ApiError {
     return error;
   }
 
-  if (error instanceof Error) {
-    return new ApiError(error.message, 500);
-  }
-
   return new ApiError('SERVER_ERROR', 500);
 }
