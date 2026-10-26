@@ -89,11 +89,8 @@ export function validate(config: Record<string, unknown>) {
   });
 
   if (errors.length > 0) {
-    const missingVars = errors
-      .map((err) => `${err.property} (${err.constraints ? Object.values(err.constraints).join(', ') : 'obrigatória'})`)
-      .join(', ');
     throw new Error(
-      `Configuração inválida. Variáveis de ambiente obrigatórias faltando ou inválidas: ${missingVars}`,
+      'Configuração inválida. Variáveis de ambiente obrigatórias faltando. Verifique .env.example.',
     );
   }
 

@@ -48,9 +48,9 @@ describe('validate (variáveis de ambiente)', () => {
     );
   });
 
-  it('lança erro citando o nome da variável obrigatória ausente', () => {
+  it('lança erro quando uma variável obrigatória está ausente', () => {
     expect(() => validate(envSemVariavel('FILE_URL_SECRET'))).toThrow(
-      /FILE_URL_SECRET/,
+      /Configuração inválida/,
     );
   });
 
