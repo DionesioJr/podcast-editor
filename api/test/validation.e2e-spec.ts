@@ -36,6 +36,34 @@ class ExemploValidacaoController {
 })
 class ExemploValidacaoModule {}
 
+function registrarValidationPipe(app: INestApplication) {
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalPipes(
+    new NestValidationPipe({
+      transform: true,
+      forbidNonWhitelisted: true,
+      whitelist: true,
+      exceptionFactory: (errors: any[]) => {
+        const message = errors
+          .flatMap((err) => {
+            const field = err.property;
+            const constraints = translateConstraints(err.constraints || {});
+            return constraints.map((c) => `${field} ${c}`);
+          })
+          .join('; ');
+
+        const exception = new UnprocessableEntityException(message);
+        (exception as any).response = {
+          statusCode: 422,
+          code: 'VALIDATION_ERROR',
+          message,
+        };
+        return exception;
+      },
+    }),
+  );
+}
+
 describe('Validação global (e2e)', () => {
   let app: INestApplication;
 
@@ -46,31 +74,7 @@ describe('Validação global (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
 
-    app.useGlobalFilters(new HttpExceptionFilter());
-    app.useGlobalPipes(
-      new NestValidationPipe({
-        transform: true,
-        forbidNonWhitelisted: true,
-        whitelist: true,
-        exceptionFactory: (errors: any[]) => {
-          const message = errors
-            .flatMap((err) => {
-              const field = err.property;
-              const constraints = translateConstraints(err.constraints || {});
-              return constraints.map((c) => `${field} ${c}`);
-            })
-            .join('; ');
-
-          const exception = new UnprocessableEntityException(message);
-          (exception as any).response = {
-            statusCode: 422,
-            code: 'VALIDATION_ERROR',
-            message,
-          };
-          return exception;
-        },
-      }),
-    );
+    registrarValidationPipe(app);
 
     await app.init();
   });
