@@ -52,4 +52,18 @@ describe('translateConstraints', () => {
 
     expect(result.length).toBe(2);
   });
+
+  it('traduz constraint minLength para português, sem confundir com min', () => {
+    const constraints = { minLength: 'must be longer than or equal to 3 characters' };
+    const result = translateConstraints(constraints);
+
+    expect(result).toContain('deve ter no mínimo');
+  });
+
+  it('traduz constraint maxLength para português, sem confundir com max', () => {
+    const constraints = { maxLength: 'must be shorter than or equal to 10 characters' };
+    const result = translateConstraints(constraints);
+
+    expect(result).toContain('deve ter no máximo');
+  });
 });
