@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { IProjectsRepository, ProjectsModule } from './projects.module';
+import { ProjectsModule } from './projects.module';
 import { ProjectsRepository } from './repositories/projects.repository';
 
 describe('ProjectsModule', () => {
@@ -22,6 +22,6 @@ describe('ProjectsModule', () => {
       imports: [ProjectsModule],
     }).compile();
 
-    expect(moduleRef.get(IProjectsRepository)).toBeInstanceOf(ProjectsRepository);
+    expect(moduleRef.get('IProjectsRepository')).toBeInstanceOf(ProjectsRepository);
   });
 });
