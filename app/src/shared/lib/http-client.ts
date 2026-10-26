@@ -20,7 +20,14 @@ async function request<T>(
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
+    const url = new URL(endpoint, BASE_URL);
+    const baseUrl = new URL(BASE_URL);
+
+    if (url.origin !== baseUrl.origin) {
+      throw new ApiError('SERVER_ERROR', 400);
+    }
+
+    const response = await fetch(url.toString(), {
       ...init,
       signal: controller.signal,
     });
