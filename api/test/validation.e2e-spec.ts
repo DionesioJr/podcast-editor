@@ -85,6 +85,7 @@ describe('Validação global (e2e)', () => {
       .send({ quantidade: 5 });
 
     expect(resposta.status).toBe(422);
+    expect(resposta.body.message).toMatch(/deve|não pode|estar/);
   });
 
   it('devolve o corpo no formato { statusCode, code, message }', async () => {
@@ -97,6 +98,7 @@ describe('Validação global (e2e)', () => {
       code: 'VALIDATION_ERROR',
       message: expect.any(String),
     });
+    expect(resposta.body.message).toMatch(/deve|não pode|estar/);
   });
 
   it('bloqueia campo extra não declarado no DTO', async () => {
@@ -105,6 +107,7 @@ describe('Validação global (e2e)', () => {
       .send({ nome: 'teste', quantidade: 1, campoExtra: 'não existe' });
 
     expect(resposta.status).toBe(422);
+    expect(resposta.body.message).toMatch(/propriedade não permitida|campoExtra/);
   });
 
   it('devolve 422 quando quantidade é menor que o mínimo permitido', async () => {
@@ -113,6 +116,7 @@ describe('Validação global (e2e)', () => {
       .send({ nome: 'teste', quantidade: 0 });
 
     expect(resposta.status).toBe(422);
+    expect(resposta.body.message).toMatch(/deve ser maior ou igual|deve/);
   });
 
   it('devolve 422 quando quantidade não é um número inteiro', async () => {
@@ -121,6 +125,7 @@ describe('Validação global (e2e)', () => {
       .send({ nome: 'teste', quantidade: 'não é número' });
 
     expect(resposta.status).toBe(422);
+    expect(resposta.body.message).toMatch(/deve ser um número|deve/);
   });
 
   it('aceita corpo válido e devolve 201', async () => {
