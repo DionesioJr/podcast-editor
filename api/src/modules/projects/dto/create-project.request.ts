@@ -1,4 +1,4 @@
-import { IsString, IsInt, Min, Max } from 'class-validator';
+import { IsString, IsInt, Min, Max, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateProjectRequest {
@@ -7,6 +7,7 @@ export class CreateProjectRequest {
     example: 'meu_podcast_episodio_1.mp4',
   })
   @IsString()
+  @IsNotEmpty()
   originalName: string;
 
   @ApiProperty({
