@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { usePalette } from '@src/hooks/use-palette';
 import { theme } from '@src/constants/theme';
@@ -20,7 +20,7 @@ export function Checkbox({
 }: CheckboxProps) {
   const palette = usePalette();
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -53,7 +53,7 @@ export function Checkbox({
       color: disabled ? palette.text.tertiary : palette.text.primary,
       fontWeight: '500',
     } as TextStyle,
-  });
+  }), [checked, disabled, palette]);
 
   return (
     <Pressable

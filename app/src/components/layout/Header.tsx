@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { usePalette } from '@src/hooks/use-palette';
 import { theme } from '@src/constants/theme';
@@ -20,7 +20,7 @@ export function Header({
 }: HeaderProps) {
   const palette = usePalette();
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -110,13 +110,18 @@ export function Header({
       color: palette.text.secondary,
       fontFamily: theme.typography.fontFamily.base,
     } as TextStyle,
-  });
+    logoIcon: {
+      fontSize: theme.typography.fontSize.md,
+      fontWeight: '700',
+      color: palette.white,
+    } as TextStyle,
+  }), [palette]);
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.logoSection}>
         <View style={styles.logoBg}>
-          <Text style={{ color: palette.white, fontSize: theme.typography.fontSize.md, fontWeight: '700' } as TextStyle}>♫</Text>
+          <Text style={styles.logoIcon}>♫</Text>
         </View>
         <Text style={styles.appNameText}>{appName}</Text>
       </View>

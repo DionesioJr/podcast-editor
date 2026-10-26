@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { usePalette } from '@src/hooks/use-palette';
 import { theme } from '@src/constants/theme';
@@ -38,7 +38,7 @@ export function ProgressBar({
   const color = variantColors[variant];
   const height = heights[size];
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       width: '100%',
       height,
@@ -52,7 +52,7 @@ export function ProgressBar({
       width: `${normalizedProgress}%`,
       borderRadius: height / 2,
     },
-  });
+  }), [height, color, normalizedProgress, palette]);
 
   return (
     <View style={[styles.container, style]}>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { usePalette } from '@src/hooks/use-palette';
 import { useBreakpoint } from '@src/hooks/use-breakpoint';
@@ -21,7 +21,7 @@ export function EditorContainer({
   const horizontalPadding = isMobile ? theme.spacing[4] : theme.spacing[7];
   const verticalPadding = theme.spacing[6];
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     wrapper: {
       flex: 1,
       backgroundColor: palette.background,
@@ -40,7 +40,7 @@ export function EditorContainer({
       paddingHorizontal: horizontalPadding,
       paddingVertical: verticalPadding,
     },
-  });
+  }), [palette, horizontalPadding]);
 
   return (
     <View style={[styles.wrapper, style]}>

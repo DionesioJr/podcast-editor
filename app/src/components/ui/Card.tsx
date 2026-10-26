@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { usePalette } from '@src/hooks/use-palette';
 import { theme } from '@src/constants/theme';
@@ -74,7 +74,7 @@ export function Card({
   const currentVariant = variantStyles[variant];
   const currentPadding = paddingSizes[padding];
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     card: {
       borderRadius: theme.radius.base,
       padding: currentPadding,
@@ -87,7 +87,7 @@ export function Card({
       shadowRadius: currentVariant.shadowRadius,
       elevation: currentVariant.elevation,
     },
-  });
+  }), [currentPadding, currentVariant]);
 
   return <View style={[styles.card, style]}>{children}</View>;
 }

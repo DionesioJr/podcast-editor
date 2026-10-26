@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { usePalette } from '@src/hooks/use-palette';
 import { theme } from '@src/constants/theme';
@@ -55,7 +55,7 @@ export function Button({
   const currentSize = sizes[size];
   const currentVariant = variantStyles[variant];
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     button: {
       paddingHorizontal: currentSize.padding,
       paddingVertical: currentSize.padding,
@@ -72,7 +72,7 @@ export function Button({
       color: textColors[variant],
       fontFamily: theme.typography.fontFamily.base,
     } as TextStyle,
-  });
+  }), [currentSize, currentVariant, variant]);
 
   return (
     <Pressable
