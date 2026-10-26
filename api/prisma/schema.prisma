@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model projects {
+  id                 String   @id @unique @db.Char(36)
+  token_hash         String   @unique @db.Char(64)
+  ip_hash            String   @db.Char(64)
+  status             String   @db.VarChar(255) @default("UPLOADING")
+  error_code         String?  @db.VarChar(255)
+  original_name      String   @db.VarChar(255)
+  size_bytes         BigInt
+  duration_ms        Int      @db.UnsignedInt
+  width              Int      @db.UnsignedInt
+  height             Int      @db.UnsignedInt
+  has_speech         Boolean  @default(false)
+  low_quality        Boolean  @default(false)
+  settings           String   @db.LongText
+  manual_cuts        String   @db.LongText
+  protected_ranges   String   @db.LongText
+  history_cursor     Int      @default(0) @db.UnsignedInt
+  ai_analyses_used   Int      @default(0) @db.UnsignedInt
+  exports_used       Int      @default(0) @db.UnsignedInt
+  expires_at         DateTime @db.DateTime(0)
+
+  @@index([token_hash])
+  @@index([ip_hash])
+  @@index([status])
+  @@index([expires_at])
+}
