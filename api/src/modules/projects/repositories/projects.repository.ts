@@ -14,7 +14,7 @@ export class ProjectsRepository implements IProjectsRepository {
   async create(data: Prisma.projectsCreateInput): Promise<Prisma.projectsGetPayload<{}>> {
     try {
       const project = await this.prisma.projects.create({ data });
-      this.logger.log(`Projeto criado: ${project.id}`);
+      this.logger.log('Projeto criado com sucesso');
       return project;
     } catch (error) {
       this.logger.error(`Erro ao criar projeto: ${error instanceof Error ? error.message : String(error)}`);
@@ -35,10 +35,10 @@ export class ProjectsRepository implements IProjectsRepository {
   async delete(id: string): Promise<Prisma.projectsGetPayload<{}>> {
     try {
       const project = await this.prisma.projects.delete({ where: { id } });
-      this.logger.log(`Projeto deletado: ${id}`);
+      this.logger.log('Projeto deletado com sucesso');
       return project;
     } catch (error) {
-      this.logger.error(`Erro ao deletar projeto ${id}: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(`Erro ao deletar projeto: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
