@@ -1,10 +1,18 @@
 import { Module } from '@nestjs/common';
 
 import { SharedModule } from '@/shared/shared.module';
-import { ProjectsController } from './projects.controller';
+
+import { ProjectsRepository } from './repositories/projects.repository';
+
+export const IProjectsRepository = Symbol('IProjectsRepository');
 
 @Module({
   imports: [SharedModule],
-  controllers: [ProjectsController],
+  providers: [
+    {
+      provide: IProjectsRepository,
+      useClass: ProjectsRepository,
+    },
+  ],
 })
 export class ProjectsModule {}

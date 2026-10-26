@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { ProjectsController } from './projects.controller';
-import { ProjectsModule } from './projects.module';
+import { IProjectsRepository, ProjectsModule } from './projects.module';
+import { ProjectsRepository } from './repositories/projects.repository';
 
 describe('ProjectsModule', () => {
   beforeAll(() => {
@@ -17,11 +17,11 @@ describe('ProjectsModule', () => {
     expect(moduleRef.get(PrismaService)).toBeInstanceOf(PrismaService);
   });
 
-  it('registra o ProjectsController', async () => {
+  it('deve resolver o token IProjectsRepository para a implementação ProjectsRepository', async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       imports: [ProjectsModule],
     }).compile();
 
-    expect(moduleRef.get(ProjectsController)).toBeInstanceOf(ProjectsController);
+    expect(moduleRef.get(IProjectsRepository)).toBeInstanceOf(ProjectsRepository);
   });
 });
