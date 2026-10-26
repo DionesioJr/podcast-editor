@@ -14,6 +14,7 @@ export interface Palette {
   dark: string;
   background: string;
   border: string;
+  white: string;
   text: {
     primary: string;
     secondary: string;
