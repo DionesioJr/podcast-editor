@@ -1,5 +1,6 @@
 import { httpClient } from './http-client';
 import { ApiError } from './api-error';
+import { BASE_URL } from '@src/config/api';
 
 describe('httpClient (PDE-9)', () => {
   const fetchOriginal = global.fetch;
@@ -112,6 +113,34 @@ describe('httpClient (PDE-9)', () => {
 
     const [, opcoes] = fetchMock.mock.calls[0];
     expect(opcoes.body).toBeUndefined();
+  });
+
+  it('rejeita endpoint que aponta para um origin diferente do BASE_URL', async () => {
+    const fetchMock = jest.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(
+      httpClient.get('https://outro-dominio.com/admin')
+    ).rejects.toMatchObject({
+      message: 'Erro no servidor. Tente novamente mais tarde.',
+      code: 'SERVER_ERROR',
+      statusCode: 400,
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('normaliza path traversal e mantém o mesmo origin do BASE_URL', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await httpClient.get('/../admin');
+
+    const [urlChamada] = fetchMock.mock.calls[0];
+    expect(new URL(String(urlChamada)).origin).toBe(new URL(BASE_URL).origin);
   });
 
   it('usa o método DELETE sem corpo', async () => {
