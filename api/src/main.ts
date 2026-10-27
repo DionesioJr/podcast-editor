@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { UnprocessableEntityException, ValidationPipe as NestValidationPipe } from '@nestjs/common';
+import type { Request, Response } from 'express';
 
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -44,6 +45,14 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
+
+  app.getHttpServer().get('/docs-json', (req: Request, res: Response) => {
+    res.json(document);
+  });
+
+  app.setGlobalPrefix('v1', {
+    exclude: ['/health', '/docs', '/docs-json'],
+  });
 
   await app.listen(port);
 }
