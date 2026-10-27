@@ -4,15 +4,13 @@ import {
   INestApplication,
   Module,
   Post,
-  UnprocessableEntityException,
-  ValidationPipe as NestValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { IsInt, IsString, Min } from 'class-validator';
 import request from 'supertest';
 
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
-import { translateConstraints } from '../src/common/validation/translate-constraints';
+import { createValidationPipe } from '../src/common/validation/create-validation-pipe';
 
 class CriarExemploDto {
   @IsString()
@@ -38,30 +36,7 @@ class ExemploValidacaoModule {}
 
 function registrarValidationPipe(app: INestApplication) {
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalPipes(
-    new NestValidationPipe({
-      transform: true,
-      forbidNonWhitelisted: true,
-      whitelist: true,
-      exceptionFactory: (errors: any[]) => {
-        const message = errors
-          .flatMap((err) => {
-            const field = err.property;
-            const constraints = translateConstraints(err.constraints || {});
-            return constraints.map((c) => `${field} ${c}`);
-          })
-          .join('; ');
-
-        const exception = new UnprocessableEntityException(message);
-        (exception as any).response = {
-          statusCode: 422,
-          code: 'VALIDATION_ERROR',
-          message,
-        };
-        return exception;
-      },
-    }),
-  );
+  app.useGlobalPipes(createValidationPipe());
 }
 
 describe('Validação global (e2e)', () => {

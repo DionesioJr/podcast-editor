@@ -1,10 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { UnprocessableEntityException, ValidationPipe as NestValidationPipe } from '@nestjs/common';
 
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { translateConstraints } from './common/validation/translate-constraints';
+import { createValidationPipe } from './common/validation/create-validation-pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,30 +11,7 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  app.useGlobalPipes(
-    new NestValidationPipe({
-      transform: true,
-      forbidNonWhitelisted: true,
-      whitelist: true,
-      exceptionFactory: (errors: any[]) => {
-        const message = errors
-          .flatMap((err) => {
-            const field = err.property;
-            const constraints = translateConstraints(err.constraints || {});
-            return constraints.map((c) => `${field} ${c}`);
-          })
-          .join('; ');
-
-        const exception = new UnprocessableEntityException(message);
-        (exception as any).response = {
-          statusCode: 422,
-          code: 'VALIDATION_ERROR',
-          message,
-        };
-        return exception;
-      },
-    }),
-  );
+  app.useGlobalPipes(createValidationPipe());
 
   const config = new DocumentBuilder()
     .setTitle('Podcast Editor API')
