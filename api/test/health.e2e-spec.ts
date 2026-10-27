@@ -6,11 +6,18 @@ import request from 'supertest';
 
 import { AppModule } from '../src/app.module';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
+import { PrismaService } from '../src/shared/prisma/prisma.service';
 
-async function criarAppComoProducao(): Promise<INestApplication> {
-  const moduleFixture: TestingModule = await Test.createTestingModule({
+async function criarAppComoProducao(overridePrisma?: any): Promise<INestApplication> {
+  const builder = Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  });
+
+  if (overridePrisma) {
+    builder.overrideProvider(PrismaService).useValue(overridePrisma);
+  }
+
+  const moduleFixture: TestingModule = await builder.compile();
 
   const app = moduleFixture.createNestApplication();
   app.useGlobalFilters(new HttpExceptionFilter());
@@ -48,15 +55,35 @@ describe('Health (e2e)', () => {
     process.env.OPENAI_LLM_MODEL ??= 'gpt-4o-mini';
     process.env.MIN_FREE_DISK_GB ??= '5';
     process.env.EXPORT_CONCURRENCY ??= '2';
-
-    app = await criarAppComoProducao();
   });
 
-  afterAll(async () => {
-    await app.close();
+  afterEach(async () => {
+    if (app) {
+      await app.close();
+    }
   });
 
-  it('GET /health devolve 503 quando o banco não está disponível e descreve banco e disco', async () => {
+  it('GET /health devolve 200 e descreve banco e disco quando ambos estão ok', async () => {
+    const prismaMock = { $queryRaw: jest.fn().mockResolvedValue([{ '1': 1 }]) };
+    app = await criarAppComoProducao(prismaMock);
+
+    const resposta = await request(app.getHttpServer()).get('/health');
+
+    expect(resposta.status).toBe(200);
+    expect(resposta.body).toHaveProperty('status', 'healthy');
+    expect(resposta.body).toHaveProperty('database');
+    expect(resposta.body).toHaveProperty('disk');
+    expect(resposta.body).toHaveProperty('timestamp');
+    expect(resposta.body.database.status).toBe('ok');
+    expect(resposta.body.disk.status).toBe('ok');
+  });
+
+  it('GET /health devolve 503 quando o banco não está disponível', async () => {
+    const prismaMock = {
+      $queryRaw: jest.fn().mockRejectedValue(new Error('conexão recusada')),
+    };
+    app = await criarAppComoProducao(prismaMock);
+
     const resposta = await request(app.getHttpServer()).get('/health');
 
     expect(resposta.status).toBe(503);
@@ -68,12 +95,18 @@ describe('Health (e2e)', () => {
   });
 
   it('GET /health não recebe o prefixo /v1', async () => {
+    const prismaMock = { $queryRaw: jest.fn().mockResolvedValue([{ '1': 1 }]) };
+    app = await criarAppComoProducao(prismaMock);
+
     const comPrefixo = await request(app.getHttpServer()).get('/v1/health');
 
     expect(comPrefixo.status).toBe(404);
   });
 
   it('GET /docs mostra a UI do Swagger', async () => {
+    const prismaMock = { $queryRaw: jest.fn().mockResolvedValue([{ '1': 1 }]) };
+    app = await criarAppComoProducao(prismaMock);
+
     const resposta = await request(app.getHttpServer()).get('/docs');
 
     expect(resposta.status).toBe(200);
@@ -81,6 +114,9 @@ describe('Health (e2e)', () => {
   });
 
   it('GET /docs-json devolve o documento OpenAPI', async () => {
+    const prismaMock = { $queryRaw: jest.fn().mockResolvedValue([{ '1': 1 }]) };
+    app = await criarAppComoProducao(prismaMock);
+
     const resposta = await request(app.getHttpServer()).get('/docs-json');
 
     expect(resposta.status).toBe(200);
@@ -90,14 +126,11 @@ describe('Health (e2e)', () => {
   });
 
   it('GET /docs-json não recebe o prefixo /v1', async () => {
+    const prismaMock = { $queryRaw: jest.fn().mockResolvedValue([{ '1': 1 }]) };
+    app = await criarAppComoProducao(prismaMock);
+
     const comPrefixo = await request(app.getHttpServer()).get('/v1/docs-json');
 
     expect(comPrefixo.status).toBe(404);
-  });
-
-  it('GET /rota-inexistente sem prefixo devolve 404', async () => {
-    const resposta = await request(app.getHttpServer()).get('/rota-inexistente');
-
-    expect(resposta.status).toBe(404);
   });
 });

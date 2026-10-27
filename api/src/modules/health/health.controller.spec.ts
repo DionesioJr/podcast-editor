@@ -65,10 +65,9 @@ describe('HealthController', () => {
   it('lança HttpException 503 quando o banco falha', async () => {
     prisma.$queryRaw.mockRejectedValue(new Error('conexão recusada'));
 
-    await expect(controller.check()).rejects.toThrow(HttpException);
-
     try {
       await controller.check();
+      throw new Error('deveria ter lançado HttpException');
     } catch (error) {
       expect(error).toBeInstanceOf(HttpException);
       expect((error as HttpException).getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);

@@ -56,7 +56,7 @@ export class HealthController {
       return { status: 'ok' };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Database health check failed: ${message}`);
+      this.logger.error(`Verificação de saúde do banco falhou: ${message}`);
       return { status: 'error', message };
     }
   }
@@ -84,7 +84,7 @@ export class HealthController {
       return { status: 'ok', freeGb };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Disk health check failed: ${message}`);
+      this.logger.error(`Verificação de saúde do disco falhou: ${message}`);
       return { status: 'error', message };
     }
   }
