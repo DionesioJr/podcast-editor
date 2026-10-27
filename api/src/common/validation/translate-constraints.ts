@@ -23,7 +23,7 @@ const constraintsMap: Record<string, string> = {
 
 export function translateConstraints(constraints: Record<string, string>): string[] {
   return Object.entries(constraints).map(([key, message]) => {
-    const baseKey = Object.keys(constraintsMap).find((k) => key.toLowerCase() === k);
+    const baseKey = Object.keys(constraintsMap).find((k) => key.toLowerCase() === k.toLowerCase());
 
     if (baseKey && constraintsMap[baseKey]) {
       return constraintsMap[baseKey];
