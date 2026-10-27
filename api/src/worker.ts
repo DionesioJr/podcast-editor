@@ -7,4 +7,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
 }
 
-bootstrap();
+bootstrap().catch((erro) => {
+  console.error('Falha ao iniciar o worker', erro);
+  process.exit(1);
+});

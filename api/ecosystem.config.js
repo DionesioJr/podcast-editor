@@ -25,6 +25,7 @@ module.exports = {
       exec_mode: 'fork',
       autorestart: true,
       exp_backoff_restart_delay: 100,
+      max_memory_restart: '2G',
       env: {
         NODE_ENV: 'production',
       },
