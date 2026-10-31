@@ -9,7 +9,6 @@
 #   DEPLOY_BRANCH  branch a publicar (padrão: a branch atual do repositório)
 #   PM2_CONFIG     caminho do ecosystem.config.js (padrão: api/ecosystem.config.js)
 #   SKIP_APP       "1" para não exportar o app web
-#   SKIP_CRON      "1" para não instalar o cron do backup
 
 set -euo pipefail
 
@@ -29,7 +28,7 @@ Pré-requisitos da VPS (uma única vez):
   - Caddy rodando com api/Caddyfile (veja as variáveis no cabeçalho dele)
 
 Passos executados: git pull, build da API, migrações do Prisma,
-reload do PM2, export web do app e instalação do cron do backup.
+reload do PM2 e export web do app.
 
 Uso: bash api/deploy.sh [--help]
 TXT
@@ -64,10 +63,6 @@ load_env() {
 load_env "$API_DIR/.env"
 load_env "$APP_DIR/.env"
 
-# O api/.env de exemplo traz NODE_ENV=development; em produção forçamos
-# production para o PM2 não subir o app em modo de desenvolvimento (15.2).
-export NODE_ENV=production
-
 log "1/6 Atualizando o código em $REPO_DIR"
 if [[ -n "${DEPLOY_BRANCH:-}" ]]; then
   git -C "$REPO_DIR" fetch --prune origin "$DEPLOY_BRANCH"
@@ -88,7 +83,8 @@ pnpm --dir "$API_DIR" exec prisma migrate deploy
 
 log "5/6 Recarregando os processos do PM2"
 # startOrReload sobe os processos no primeiro deploy e recarrega os seguintes.
-pm2 startOrReload "$PM2_CONFIG" --update-env
+# Sem --update-env: o PM2 usa o env do ecosystem.config.js e o deploy não mexe no NODE_ENV (PDE-119).
+pm2 startOrReload "$PM2_CONFIG"
 
 log "6/6 Exportando o app web"
 if [[ "${SKIP_APP:-0}" == "1" ]]; then
@@ -100,22 +96,6 @@ else
   # (padrão /srv/podcast-editor/app/dist, igual a app/dist com o repositório em
   # /srv/podcast-editor); ajuste APP_WEB_ROOT no Caddy se clonar em outro lugar.
   pnpm --dir "$APP_DIR" exec expo export -p web --output-dir dist
-fi
-
-# O cron roda como root; sem permissão, avise e siga (o backup continua manual).
-if [[ "${SKIP_CRON:-0}" != "1" ]]; then
-  if [[ "$(id -u)" == "0" && -d /etc/cron.d ]]; then
-    cat > /etc/cron.d/podcast-backup <<EOF
-# Backup diário do banco do Podcast Editor (Documento Técnico 15.4).
-SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-0 3 * * * root bash $API_DIR/scripts/backup.sh >> /var/log/podcast-backup.log 2>&1
-EOF
-    chmod 0644 /etc/cron.d/podcast-backup
-    log "Cron do backup instalado em /etc/cron.d/podcast-backup."
-  else
-    log "Aviso: sem permissão de root para instalar o cron do backup em /etc/cron.d."
-  fi
 fi
 
 log "Deploy concluído."

@@ -63,17 +63,6 @@ descreverComShellPosix('deploy.sh: execução real com binários simulados', () 
     expect(posicoes).toEqual([...posicoes].sort((a, b) => a - b));
   });
 
-  it('recarrega o PM2 com NODE_ENV=production mesmo com NODE_ENV=development no ambiente', () => {
-    const resultado = ambiente.rodar({ NODE_ENV: 'development' });
-
-    expect(resultado.status).toBe(0);
-
-    const pm2 = ambiente.linhaCom('startOrReload');
-
-    expect(pm2).toContain('--update-env');
-    expect(pm2).toContain('NODE_ENV=production');
-  });
-
   it('instala as dependências sem --prod, para o build ter as devDependencies', () => {
     const resultado = ambiente.rodar({});
 
@@ -97,18 +86,6 @@ descreverComShellPosix('deploy.sh: execução real com binários simulados', () 
 
     expect(linhas.some((linha) => linha.includes('startOrReload'))).toBe(true);
     expect(linhas.some((linha) => linha.includes('expo export -p web'))).toBe(false);
-  });
-
-  it('avisa e segue quando não há root para instalar o cron do backup', () => {
-    const resultado = ambiente.rodar({ SKIP_CRON: '0' });
-
-    expect(resultado.status).toBe(0);
-    expect(resultado.stdout).toContain('Deploy concluído.');
-    expect(resultado.stdout).toMatch(/sem permissão de root/);
-
-    const linhas = ambiente.lerLinhas();
-
-    expect(linhas.some((linha) => linha.includes('expo export -p web'))).toBe(true);
   });
 
   it('para o deploy quando o pull falha, sem compilar, migrar nem recarregar o PM2', () => {

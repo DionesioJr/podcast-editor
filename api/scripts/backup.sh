@@ -2,7 +2,8 @@
 #
 # Backup diário do banco do Podcast Editor (Documento Técnico 15.4).
 # Gera um dump comprimido e mantém os 7 dias mais recentes.
-# Agendado pelo deploy.sh em /etc/cron.d/podcast-backup (todo dia às 3h).
+# Agende a execução diária por fora (por exemplo em /etc/cron.d) apontando
+# para o caminho absoluto deste script.
 #
 # Variáveis aceitas do ambiente e, quando faltarem, de api/.env (o ambiente
 # sempre tem precedência, para o cron poder apontar BACKUP_DIR ou DB_*):

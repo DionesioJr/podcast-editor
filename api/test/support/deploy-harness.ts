@@ -28,7 +28,6 @@ export function ambienteLimpoDeploy(): NodeJS.ProcessEnv {
     'DEPLOY_BRANCH',
     'PM2_CONFIG',
     'SKIP_APP',
-    'SKIP_CRON',
     'EXPO_PUBLIC_API_URL',
     'NODE_ENV',
   ]) {
@@ -62,12 +61,6 @@ function criarBinariosFalsos(pasta: string): string {
     fs.writeFileSync(path.join(pastaBin, nome), script, { mode: 0o755 });
   }
 
-  // id falso devolve um uid comum para exercitar o caminho "sem root" do bloco
-  // de cron sem escrever em /etc/cron.d.
-  fs.writeFileSync(path.join(pastaBin, 'id'), '#!/usr/bin/env bash\nprintf "1000\\n"\n', {
-    mode: 0o755,
-  });
-
   return pastaBin;
 }
 
@@ -81,7 +74,6 @@ export interface AmbienteDeDeploy {
   rodar(extras: NodeJS.ProcessEnv, remover?: string[]): ResultadoDeComando;
   lerLinhas(): string[];
   posicao(trecho: string): number;
-  linhaCom(trecho: string): string;
 }
 
 export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
@@ -97,7 +89,6 @@ export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
       ...ambienteLimpoDeploy(),
       PATH: `${pastaBin}${path.delimiter}${caminhoOriginal()}`,
       FAKE_LOG: log,
-      SKIP_CRON: '1',
       EXPO_PUBLIC_API_URL: 'https://editor.exemplo.com',
       ...extras,
     };
@@ -140,9 +131,5 @@ export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
     return indice;
   }
 
-  function linhaCom(trecho: string): string {
-    return lerLinhas()[posicao(trecho)];
-  }
-
-  return { pasta, log, rodar, lerLinhas, posicao, linhaCom };
+  return { pasta, log, rodar, lerLinhas, posicao };
 }
