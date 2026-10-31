@@ -5,10 +5,12 @@ import * as path from 'path';
 import {
   AmbienteDeDeploy,
   CAMINHO_DEPLOY,
+  RAIZ_DA_API,
   RAIZ_DO_REPO,
   TEM_ENV_DO_APP,
   ambienteLimpoDeploy,
   criarAmbienteDeDeploy,
+  criarPastaTemporaria,
   limparPastasTemporarias,
 } from './support/deploy-harness';
 import { descreverComShellPosix } from './support/shell-harness';
@@ -201,4 +203,104 @@ descreverComShellPosix('deploy.sh: execução real com binários simulados', () 
       expect(linhas.some((linha) => linha.includes('expo export -p web'))).toBe(false);
     });
   }
+});
+
+descreverComShellPosix('deploy.sh: raiz do app web no arquivo do Caddy', () => {
+  const RAIZ_WEB_PADRAO = path.join(RAIZ_DO_REPO, 'app', 'dist');
+
+  function lerArquivoDoCaddy(): string {
+    return fs.readFileSync(ambiente.arquivoCaddy, 'utf8');
+  }
+
+  it('cria o arquivo do Caddy com APP_WEB_ROOT igual à pasta que o próprio deploy exporta', () => {
+    const resultado = ambiente.rodar({});
+
+    expect(resultado.status).toBe(0);
+    expect(fs.existsSync(ambiente.arquivoCaddy)).toBe(true);
+    expect(lerArquivoDoCaddy()).toBe(`APP_WEB_ROOT=${RAIZ_WEB_PADRAO}\n`);
+  });
+
+  it('grava a raiz mesmo quando a exportação web é pulada com SKIP_APP=1', () => {
+    const resultado = ambiente.rodar({ SKIP_APP: '1' });
+
+    expect(resultado.status).toBe(0);
+    expect(fs.existsSync(ambiente.arquivoCaddy)).toBe(true);
+    expect(lerArquivoDoCaddy()).toBe(`APP_WEB_ROOT=${RAIZ_WEB_PADRAO}\n`);
+  });
+
+  it('preserva DOMAIN e API_UPSTREAM e substitui o APP_WEB_ROOT anterior', () => {
+    fs.writeFileSync(
+      ambiente.arquivoCaddy,
+      'DOMAIN=editor.exemplo.com\nAPI_UPSTREAM=127.0.0.1:4000\nAPP_WEB_ROOT=/caminho/antigo\n',
+    );
+
+    const resultado = ambiente.rodar({});
+
+    expect(resultado.status).toBe(0);
+
+    const conteudo = lerArquivoDoCaddy();
+
+    expect(conteudo).toContain('DOMAIN=editor.exemplo.com');
+    expect(conteudo).toContain('API_UPSTREAM=127.0.0.1:4000');
+    expect(conteudo).not.toContain('/caminho/antigo');
+    expect(conteudo).toContain(`APP_WEB_ROOT=${RAIZ_WEB_PADRAO}`);
+    expect(conteudo.match(/^APP_WEB_ROOT=/gm)).toHaveLength(1);
+  });
+
+  it('não acumula linhas APP_WEB_ROOT quando o deploy roda mais de uma vez', () => {
+    expect(ambiente.rodar({}).status).toBe(0);
+    expect(ambiente.rodar({}).status).toBe(0);
+
+    expect(lerArquivoDoCaddy().match(/^APP_WEB_ROOT=/gm)).toHaveLength(1);
+  });
+
+  it('grava o caminho real do clone, e não /srv/podcast-editor, quando o repositório está em outra pasta', () => {
+    const outroClone = criarPastaTemporaria('pde-repo-');
+    const apiDoClone = path.join(outroClone, 'api');
+    const appDoClone = path.join(outroClone, 'app');
+
+    fs.mkdirSync(apiDoClone, { recursive: true });
+    fs.mkdirSync(appDoClone, { recursive: true });
+    fs.writeFileSync(
+      path.join(apiDoClone, 'ecosystem.config.js'),
+      'module.exports = { apps: [] };\n',
+    );
+
+    const arquivoDoClone = path.join(apiDoClone, '.env.caddy');
+    const resultado = ambiente.rodar({
+      REPO_DIR: outroClone,
+      CADDY_ENV_FILE: arquivoDoClone,
+    });
+
+    expect(resultado.status).toBe(0);
+
+    const conteudo = fs.readFileSync(arquivoDoClone, 'utf8');
+
+    expect(conteudo).toBe(`APP_WEB_ROOT=${path.join(appDoClone, 'dist')}\n`);
+    expect(conteudo).not.toContain('/srv/podcast-editor');
+  });
+
+  it('mantém a raiz padrão do Caddyfile no layout que o deploy assume em /srv/podcast-editor', () => {
+    const fonteDoCaddy = fs.readFileSync(path.join(RAIZ_DA_API, 'Caddyfile'), 'utf8');
+    const padrao = fonteDoCaddy.match(/\{\$APP_WEB_ROOT:([^}]+)\}/);
+
+    expect(padrao?.[1]).toBe('/srv/podcast-editor/app/dist');
+  });
+
+  it('não grava a raiz do app web quando a exportação web falha', () => {
+    const resultado = ambiente.rodar({ FAKE_FAIL_ARGS: 'expo export -p web' });
+
+    expect(resultado.status).not.toBe(0);
+    expect(fs.existsSync(ambiente.arquivoCaddy)).toBe(false);
+  });
+
+  it('falha sem anunciar sucesso quando não consegue gravar o arquivo do Caddy', () => {
+    const caminhoImpossivel = path.join(ambiente.pasta, 'pasta-inexistente', '.env.caddy');
+    const resultado = ambiente.rodar({ CADDY_ENV_FILE: caminhoImpossivel });
+
+    expect(resultado.status).not.toBe(0);
+    expect(resultado.stderr).toMatch(/Não foi possível gravar a raiz do app web/);
+    expect(resultado.stdout).not.toContain('Deploy concluído');
+    expect(fs.existsSync(caminhoImpossivel)).toBe(false);
+  });
 });

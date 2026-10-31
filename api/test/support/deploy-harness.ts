@@ -20,6 +20,15 @@ export function limparPastasTemporarias(): void {
   pastasTemporarias.length = 0;
 }
 
+// Cria uma pasta temporária registrada para limpeza no afterAll.
+export function criarPastaTemporaria(prefixo = 'pde-tmp-'): string {
+  const pasta = fs.mkdtempSync(path.join(os.tmpdir(), prefixo));
+
+  pastasTemporarias.push(pasta);
+
+  return pasta;
+}
+
 export function ambienteLimpoDeploy(): NodeJS.ProcessEnv {
   const ambiente: NodeJS.ProcessEnv = { ...process.env };
 
@@ -27,6 +36,7 @@ export function ambienteLimpoDeploy(): NodeJS.ProcessEnv {
     'REPO_DIR',
     'DEPLOY_BRANCH',
     'PM2_CONFIG',
+    'CADDY_ENV_FILE',
     'SKIP_APP',
     'EXPO_PUBLIC_API_URL',
     'NODE_ENV',
@@ -72,6 +82,7 @@ export interface AmbienteDeDeploy {
   pasta: string;
   log: string;
   envDaApi: string;
+  arquivoCaddy: string;
   rodar(extras: NodeJS.ProcessEnv, remover?: string[]): ResultadoDeComando;
   lerLinhas(): string[];
   posicao(trecho: string): number;
@@ -92,13 +103,11 @@ function criarEnvDaApi(pasta: string): string {
 }
 
 export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
-  const pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'pde-deploy-'));
-
-  pastasTemporarias.push(pasta);
-
+  const pasta = criarPastaTemporaria('pde-deploy-');
   const pastaBin = criarBinariosFalsos(pasta);
   const log = path.join(pasta, 'comandos.log');
   const envDaApi = criarEnvDaApi(pasta);
+  const arquivoCaddy = path.join(pasta, '.env.caddy');
 
   function rodar(extras: NodeJS.ProcessEnv, remover: string[] = []): ResultadoDeComando {
     const ambiente: NodeJS.ProcessEnv = {
@@ -108,6 +117,7 @@ export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
       EXPO_PUBLIC_API_URL: 'https://editor.exemplo.com',
       REPO_DIR: pasta,
       PM2_CONFIG: path.join(RAIZ_DA_API, 'ecosystem.config.js'),
+      CADDY_ENV_FILE: arquivoCaddy,
       ...extras,
     };
 
@@ -149,5 +159,5 @@ export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
     return indice;
   }
 
-  return { pasta, log, envDaApi, rodar, lerLinhas, posicao };
+  return { pasta, log, envDaApi, arquivoCaddy, rodar, lerLinhas, posicao };
 }
