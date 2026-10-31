@@ -4,6 +4,7 @@ import { Alert } from './Alert';
 import { Button } from './Button';
 import { getErrorMessage } from '@src/i18n';
 import { getErrorActions, ErrorActionType } from '@src/i18n/error-actions';
+import { usePalette } from '@src/hooks/use-palette';
 import { theme } from '@src/constants/theme';
 
 interface ErrorScreenProps {
@@ -13,11 +14,12 @@ interface ErrorScreenProps {
 }
 
 export function ErrorScreen({ code, title, onAction }: ErrorScreenProps) {
+  const palette = usePalette();
   const message = getErrorMessage(code);
   const actions = getErrorActions(code);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={styles.content}>
         <Alert
           type="danger"
@@ -46,7 +48,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
     padding: theme.spacing[4],
   },
   content: {
