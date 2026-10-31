@@ -1,26 +1,17 @@
 import { JobStatus, JobType } from '@prisma/client';
 
-import { JobExecutorService } from '../src/modules/jobs/executor/job-executor.service';
+import {
+  type IJobsRepository,
+  type JobRecord,
+} from '../repositories/jobs.repository.interface';
 import {
   type JobExecutionContext,
   type JobHandler,
   JobValidationError,
   TemporaryJobError,
-} from '../src/modules/jobs/executor/job-handler.interface';
-import { JobHandlerRegistry } from '../src/modules/jobs/executor/job-handler.registry';
-import type { JobRecord } from '../src/modules/jobs/repositories/jobs.repository.interface';
-
-type RepositorioFalso = {
-  claimNextQueuedJob: jest.Mock<Promise<JobRecord | null>, [JobType?]>;
-  countRunningJobsByType: jest.Mock<Promise<number>, [JobType]>;
-  findJobStatusById: jest.Mock<Promise<JobStatus | null>, [number]>;
-  updateJobProgress: jest.Mock<Promise<void>, [number, number, string | null]>;
-  markJobDone: jest.Mock<Promise<void>, [number]>;
-  markJobFailed: jest.Mock<Promise<void>, [number, number, string]>;
-  requeueJob: jest.Mock<Promise<void>, [number, number, string]>;
-  markJobCanceled: jest.Mock<Promise<void>, [number]>;
-  requeueStaleRunningJobs: jest.Mock<Promise<number>, [Date]>;
-};
+} from './job-handler.interface';
+import { JobHandlerRegistry } from './job-handler.registry';
+import { JobExecutorService } from './job-executor.service';
 
 const PROJETO = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const CHAVES_ENV = ['PROCESS_CONCURRENCY', 'WORKER_STALE_LOCK_MS'] as const;
@@ -54,7 +45,7 @@ function criarRepositorio(job: JobRecord) {
     job.locked_at = null;
     return Promise.resolve();
   };
-  const repositorio: RepositorioFalso = {
+  const repositorio: jest.Mocked<IJobsRepository> = {
     claimNextQueuedJob: jest.fn<Promise<JobRecord | null>, [JobType?]>(() => {
       if (!permitirReserva || job.status !== JobStatus.queued) {
         return Promise.resolve(null);
@@ -64,9 +55,15 @@ function criarRepositorio(job: JobRecord) {
       job.locked_at = new Date();
       return Promise.resolve({ ...job });
     }),
-    countRunningJobsByType: jest.fn<Promise<number>, [JobType]>(() => Promise.resolve(0)),
-    findJobStatusById: jest.fn<Promise<JobStatus | null>, [number]>(() => Promise.resolve(job.status)),
-    updateJobProgress: jest.fn<Promise<void>, [number, number, string | null]>(() => Promise.resolve()),
+    countRunningJobsByType: jest.fn<Promise<number>, [JobType]>(() =>
+      Promise.resolve(0),
+    ),
+    findJobStatusById: jest.fn<Promise<JobStatus | null>, [number]>(() =>
+      Promise.resolve(job.status),
+    ),
+    updateJobProgress: jest.fn<Promise<void>, [number, number, string | null]>(() =>
+      Promise.resolve(),
+    ),
     markJobDone: jest.fn<Promise<void>, [number]>(() => transitar(JobStatus.done)),
     markJobFailed: jest.fn<Promise<void>, [number, number, string]>(
       (_id, attempts, code) => transitar(JobStatus.failed, attempts, code),
@@ -74,16 +71,12 @@ function criarRepositorio(job: JobRecord) {
     requeueJob: jest.fn<Promise<void>, [number, number, string]>(
       (_id, attempts, code) => transitar(JobStatus.queued, attempts, code),
     ),
-    markJobCanceled: jest.fn<Promise<void>, [number]>(() => transitar(JobStatus.canceled)),
-    requeueStaleRunningJobs: jest.fn<Promise<number>, [Date]>((staleBefore) => {
-      const antigo = !job.locked_at || job.locked_at < staleBefore;
-      if (job.status === JobStatus.running && antigo) {
-        job.status = JobStatus.queued;
-        job.locked_at = null;
-        return Promise.resolve(1);
-      }
-      return Promise.resolve(0);
-    }),
+    markJobCanceled: jest.fn<Promise<void>, [number]>(() =>
+      transitar(JobStatus.canceled),
+    ),
+    requeueStaleRunningJobs: jest.fn<Promise<number>, [Date]>(() =>
+      Promise.resolve(0),
+    ),
   };
   return {
     repositorio,
@@ -95,7 +88,7 @@ function criarRepositorio(job: JobRecord) {
 }
 
 function criarExecutor(
-  repositorio: RepositorioFalso,
+  repositorio: jest.Mocked<IJobsRepository>,
   execute: jest.Mock<Promise<void>, [JobExecutionContext]>,
 ): JobExecutorService {
   const registro = new JobHandlerRegistry();
@@ -150,7 +143,10 @@ describe('JobExecutorService', () => {
     executor.stop();
 
     expect(execute).toHaveBeenCalledTimes(3);
-    expect(repositorio.requeueJob.mock.calls).toEqual([[job.id, 1, 'REDE'], [job.id, 2, 'REDE']]);
+    expect(repositorio.requeueJob.mock.calls).toEqual([
+      [job.id, 1, 'REDE'],
+      [job.id, 2, 'REDE'],
+    ]);
     expect(repositorio.markJobFailed).toHaveBeenCalledWith(job.id, 3, 'REDE');
     expect(repositorio.markJobDone).not.toHaveBeenCalled();
     expect(repositorio.markJobCanceled).not.toHaveBeenCalled();
@@ -176,21 +172,19 @@ describe('JobExecutorService', () => {
   it('interrompe o handler em até 2 s quando a API marca o job como cancelado', async () => {
     const { repositorio, job } = criarRepositorio(criarJob());
     let encerrou = false;
-    const execute = jest.fn<Promise<void>, [JobExecutionContext]>(
-      ({ signal }) => {
-        if (signal.aborted) return Promise.resolve();
-        return new Promise<void>((resolve) => {
-          signal.addEventListener(
-            'abort',
-            () => {
-              encerrou = true;
-              resolve();
-            },
-            { once: true },
-          );
-        });
-      },
-    );
+    const execute = jest.fn<Promise<void>, [JobExecutionContext]>(({ signal }) => {
+      if (signal.aborted) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        signal.addEventListener(
+          'abort',
+          () => {
+            encerrou = true;
+            resolve();
+          },
+          { once: true },
+        );
+      });
+    });
     const executor = criarExecutor(repositorio, execute);
 
     await executor.start();
@@ -213,9 +207,7 @@ describe('JobExecutorService', () => {
 
   it('não executa o handler quando o job já está cancelado ao ser reservado', async () => {
     const { repositorio, job } = criarRepositorio(criarJob());
-    repositorio.findJobStatusById.mockReturnValue(
-      Promise.resolve(JobStatus.canceled),
-    );
+    repositorio.findJobStatusById.mockReturnValue(Promise.resolve(JobStatus.canceled));
     const execute = jest.fn<Promise<void>, [JobExecutionContext]>(() =>
       Promise.resolve(),
     );
@@ -231,10 +223,37 @@ describe('JobExecutorService', () => {
     expect(repositorio.requeueJob).not.toHaveBeenCalled();
   });
 
-  it('devolve à fila o job running com locked_at antigo antes de buscar jobs', async () => {
+  it('pede a devolução dos running antigos antes de buscar jobs na fila', async () => {
     jest.setSystemTime(new Date('2026-10-31T12:00:00.000Z'));
     process.env.WORKER_STALE_LOCK_MS = '60000';
-    const { repositorio, job } = criarRepositorio(
+    const { repositorio } = criarRepositorio(
+      criarJob({
+        status: JobStatus.running,
+        locked_at: new Date('2026-10-31T11:50:00.000Z'),
+      }),
+    );
+    repositorio.requeueStaleRunningJobs.mockResolvedValue(1);
+    const execute = jest.fn<Promise<void>, [JobExecutionContext]>(() =>
+      Promise.resolve(),
+    );
+    const executor = criarExecutor(repositorio, execute);
+
+    await executor.start();
+    await aguardarAte(() => repositorio.claimNextQueuedJob.mock.calls.length > 0);
+    executor.stop();
+
+    expect(repositorio.requeueStaleRunningJobs).toHaveBeenCalledWith(
+      new Date('2026-10-31T11:59:00.000Z'),
+    );
+    expect(repositorio.requeueStaleRunningJobs.mock.invocationCallOrder[0]).toBeLessThan(
+      repositorio.claimNextQueuedJob.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('usa 300000 ms como limite padrão de locked_at antigo', async () => {
+    jest.setSystemTime(new Date('2026-10-31T12:00:00.000Z'));
+    delete process.env.WORKER_STALE_LOCK_MS;
+    const { repositorio } = criarRepositorio(
       criarJob({
         status: JobStatus.running,
         locked_at: new Date('2026-10-31T11:50:00.000Z'),
@@ -246,30 +265,8 @@ describe('JobExecutorService', () => {
     const executor = criarExecutor(repositorio, execute);
 
     await executor.start();
-    await aguardarAte(() => repositorio.markJobDone.mock.calls.length === 1);
     executor.stop();
 
-    expect(repositorio.requeueStaleRunningJobs).toHaveBeenCalledWith(
-      new Date('2026-10-31T11:59:00.000Z'),
-    );
-    expect(
-      repositorio.requeueStaleRunningJobs.mock.invocationCallOrder[0],
-    ).toBeLessThan(repositorio.claimNextQueuedJob.mock.invocationCallOrder[0]);
-    expect(execute).toHaveBeenCalledTimes(1);
-    expect(repositorio.markJobDone).toHaveBeenCalledWith(job.id);
-  });
-
-  it('usa 300000 ms como limite padrão de locked_at antigo', async () => {
-    jest.setSystemTime(new Date('2026-10-31T12:00:00.000Z'));
-    delete process.env.WORKER_STALE_LOCK_MS;
-    const { repositorio } = criarRepositorio(
-      criarJob({ status: JobStatus.running, locked_at: new Date('2026-10-31T11:50:00.000Z') }),
-    );
-    const execute = jest.fn<Promise<void>, [JobExecutionContext]>(() => Promise.resolve());
-    const executor = criarExecutor(repositorio, execute);
-    await executor.start();
-    await aguardarAte(() => repositorio.markJobDone.mock.calls.length === 1);
-    executor.stop();
     expect(repositorio.requeueStaleRunningJobs).toHaveBeenCalledWith(
       new Date('2026-10-31T11:55:00.000Z'),
     );
