@@ -63,13 +63,13 @@ export function rodarBackup(extras: NodeJS.ProcessEnv): ResultadoDeComando {
 }
 
 // Dump falso: imprime o conteúdo do dump e, quando pedido, registra em
-// DUMP_FAKE_LOG os argumentos recebidos e o valor de MYSQL_PWD.
-export function criarDumpFalso(pasta: string, falhar = false): string {
-  const caminho = path.join(pasta, 'dump-falso.sh');
+// DUMP_FAKE_LOG o nome do binário, os argumentos e o valor de MYSQL_PWD.
+function conteudoDumpFalso(falhar: boolean): string {
   const linhas = [
     '#!/usr/bin/env bash',
     'if [[ -n "${DUMP_FAKE_LOG:-}" ]]; then',
     '  {',
+    `    printf "nome:%s\\n" "\${0##*/}"`,
     `    printf "argumentos:%s\\n" "$*"`,
     `    printf "senha:%s\\n" "\${MYSQL_PWD:-}"`,
     '  } > "$DUMP_FAKE_LOG"',
@@ -77,9 +77,75 @@ export function criarDumpFalso(pasta: string, falhar = false): string {
     falhar ? 'exit 1' : `printf 'dump de teste\\n'`,
   ];
 
-  fs.writeFileSync(caminho, `${linhas.join('\n')}\n`, { mode: 0o755 });
+  return `${linhas.join('\n')}\n`;
+}
+
+export function criarDumpNoNome(
+  pasta: string,
+  nome: string,
+  falhar = false,
+): string {
+  const caminho = path.join(pasta, nome);
+
+  fs.writeFileSync(caminho, conteudoDumpFalso(falhar), { mode: 0o755 });
 
   return caminho;
+}
+
+export function criarDumpFalso(pasta: string, falhar = false): string {
+  return criarDumpNoNome(pasta, 'dump-falso.sh', falhar);
+}
+
+// O backup.sh procura mariadb-dump e mysqldump no PATH. Para exercitar a
+// escolha do binário de verdade, o teste roda o script com um PATH só com
+// cópias dos utilitários que ele usa, sem os binários de dump do sistema.
+const COMANDOS_NECESSARIOS = [
+  'bash',
+  'date',
+  'dirname',
+  'find',
+  'grep',
+  'gzip',
+  'mkdir',
+  'mv',
+  'rm',
+  'sed',
+  'sort',
+  'tail',
+];
+
+function resolverComando(nome: string): string | undefined {
+  const resultado = spawnSync('bash', ['-c', `command -v ${nome}`], {
+    encoding: 'utf8',
+  });
+
+  if (resultado.error || resultado.status !== 0) {
+    return undefined;
+  }
+
+  const caminho = (resultado.stdout ?? '').trim();
+
+  return caminho === '' ? undefined : caminho;
+}
+
+export function criarPastaBinRestrita(pasta: string): string {
+  const pastaBin = path.join(pasta, 'bin-restrito');
+
+  fs.mkdirSync(pastaBin, { recursive: true });
+
+  for (const comando of COMANDOS_NECESSARIOS) {
+    const origem = resolverComando(comando);
+
+    if (!origem) {
+      throw new Error(
+        `Comando necessário ao backup.sh não encontrado no ambiente: ${comando}`,
+      );
+    }
+
+    fs.symlinkSync(origem, path.join(pastaBin, comando));
+  }
+
+  return pastaBin;
 }
 
 export function dumpsEm(pasta: string): string[] {
