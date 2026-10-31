@@ -2,6 +2,7 @@ import { BASE_URL } from '@src/config/api';
 import { ApiError } from './api-error';
 import {
   buildRequestUrl,
+  extractError,
   extractErrorCode,
   interceptResponse,
 } from './http-interceptor';
@@ -136,6 +137,58 @@ describe('extractErrorCode (PDE-9)', () => {
   });
 });
 
+describe('extractError (PDE-9)', () => {
+  it('devolve code e message quando o corpo traz os dois', async () => {
+    const extract = await extractError(
+      fakeResponse({
+        ok: false,
+        status: 413,
+        json: () =>
+          Promise.resolve({
+            code: 'VIDEO_TOO_LARGE',
+            message: 'Esse vídeo tem 4 GB. O limite é 2 GB.',
+          }),
+      }),
+    );
+
+    expect(extract).toEqual({
+      code: 'VIDEO_TOO_LARGE',
+      message: 'Esse vídeo tem 4 GB. O limite é 2 GB.',
+    });
+  });
+
+  it('devolve message indefinida quando o corpo não traz texto útil', async () => {
+    const extract = await extractError(
+      fakeResponse({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({ code: 'SERVER_ERROR', message: '   ' }),
+      }),
+    );
+
+    expect(extract).toEqual({ code: 'SERVER_ERROR', message: undefined });
+  });
+
+  it('descarta message que não é texto (array de validação do NestJS)', async () => {
+    const extract = await extractError(
+      fakeResponse({
+        ok: false,
+        status: 422,
+        json: () =>
+          Promise.resolve({
+            code: 'VALIDATION_ERROR',
+            message: ['name deve ser texto', 'email é inválido'],
+          }),
+      }),
+    );
+
+    expect(extract).toEqual({
+      code: 'VALIDATION_ERROR',
+      message: undefined,
+    });
+  });
+});
+
 describe('interceptResponse (PDE-9)', () => {
   it('devolve o corpo JSON quando a resposta é bem-sucedida', async () => {
     const data = await interceptResponse<{ id: string }>(
@@ -232,5 +285,76 @@ describe('interceptResponse (PDE-9)', () => {
       statusCode: 500,
       message: 'Erro no servidor. Tente novamente mais tarde.',
     });
+  });
+
+  it('usa o message da API no lugar da tradução quando ele traz os valores reais', async () => {
+    const captured = await captureThrown(() =>
+      interceptResponse(
+        fakeResponse({
+          ok: false,
+          status: 413,
+          json: () =>
+            Promise.resolve({
+              code: 'VIDEO_TOO_LARGE',
+              message: 'Esse vídeo tem 4 GB. O limite é 2 GB.',
+            }),
+        }),
+      ),
+    );
+
+    expect(captured).toBeInstanceOf(ApiError);
+    expect(captured).toMatchObject({
+      code: 'VIDEO_TOO_LARGE',
+      statusCode: 413,
+      message: 'Esse vídeo tem 4 GB. O limite é 2 GB.',
+    });
+    expect((captured as ApiError).detail).toBe(
+      'Esse vídeo tem 4 GB. O limite é 2 GB.',
+    );
+  });
+
+  it('mantém a tradução quando o message da API é a mensagem padrão do HTTP', async () => {
+    const captured = await captureThrown(() =>
+      interceptResponse(
+        fakeResponse({
+          ok: false,
+          status: 400,
+          json: () =>
+            Promise.resolve({
+              code: 'VALIDATION_ERROR',
+              message: 'Bad Request',
+            }),
+        }),
+      ),
+    );
+
+    expect(captured).toMatchObject({
+      code: 'VALIDATION_ERROR',
+      statusCode: 400,
+      message: 'Alguns dados enviados estão incorretos. Revise e tente novamente.',
+    });
+  });
+
+  it('ignora o message da API quando o code é desconhecido e cai na genérica', async () => {
+    const captured = await captureThrown(() =>
+      interceptResponse(
+        fakeResponse({
+          ok: false,
+          status: 500,
+          json: () =>
+            Promise.resolve({
+              code: 'CODE_QUE_NAO_EXISTE',
+              message: 'detalhe cru do servidor',
+            }),
+        }),
+      ),
+    );
+
+    expect(captured).toMatchObject({
+      code: 'CODE_QUE_NAO_EXISTE',
+      statusCode: 500,
+      message: GENERIC_MESSAGE,
+    });
+    expect(captured).not.toHaveProperty('message', 'detalhe cru do servidor');
   });
 });

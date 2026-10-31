@@ -39,6 +39,18 @@ const MENSAGENS_DA_SECAO_9: Record<string, string> = {
 
 const CODES_INTERNOS = ['SERVER_ERROR', 'NETWORK_ERROR', 'TIMEOUT'] as const;
 
+const CODES_DO_FILTRO_DA_API: Record<string, string> = {
+  VALIDATION_ERROR:
+    'Alguns dados enviados estão incorretos. Revise e tente novamente.',
+  UNAUTHORIZED: 'Sua sessão expirou. Abra o projeto novamente.',
+  FORBIDDEN: 'Você não tem permissão para fazer isso.',
+  NOT_FOUND: 'Não encontramos o que você procura.',
+  CONFLICT: 'Não foi possível concluir a ação agora. Tente novamente.',
+  RATE_LIMIT_EXCEEDED:
+    'Você fez muitas solicitações em pouco tempo. Aguarde um instante e tente novamente.',
+  INTERNAL_ERROR: 'Erro no servidor. Tente novamente mais tarde.',
+};
+
 describe('Cobertura da seção 9 do PROJETO.md (PDE-9)', () => {
   it.each(Object.entries(MENSAGENS_DA_SECAO_9))(
     'traduz %s com o texto da seção 9',
@@ -47,10 +59,21 @@ describe('Cobertura da seção 9 do PROJETO.md (PDE-9)', () => {
     },
   );
 
-  it.each([...Object.keys(MENSAGENS_DA_SECAO_9), ...CODES_INTERNOS])(
+  it.each([
+    ...Object.keys(MENSAGENS_DA_SECAO_9),
+    ...CODES_INTERNOS,
+    ...Object.keys(CODES_DO_FILTRO_DA_API),
+  ])(
     'não deixa %s cair na mensagem genérica',
     (code) => {
       expect(getErrorMessage(code)).not.toBe('Erro desconhecido.');
+    },
+  );
+
+  it.each(Object.entries(CODES_DO_FILTRO_DA_API))(
+    'traduz o code de contrato HTTP %s com o texto do errors.json',
+    (code, expectedMessage) => {
+      expect(getErrorMessage(code)).toBe(expectedMessage);
     },
   );
 
