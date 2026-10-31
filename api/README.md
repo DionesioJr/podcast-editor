@@ -139,6 +139,8 @@ sudo -E caddy start --config /srv/podcast-editor/api/Caddyfile
 
 O `caddy start` deixa o Caddy rodando em segundo plano. Para acompanhar a subida em primeiro plano, use `caddy run` com as mesmas variáveis, como indica o cabeçalho do `api/Caddyfile`. O Caddy precisa do domínio já apontando para o IP da VPS para emitir o certificado.
 
+Atenção: o `caddy start` não é um serviço gerenciado pelo systemd, então o Caddy não volta sozinho depois de reiniciar a VPS. O repositório não traz uma unidade systemd para ele. Até que ela exista, rode de novo o comando acima depois de cada reinício.
+
 ## 7. Rodar bash api/deploy.sh
 
 O `api/deploy.sh` executa a sequência de deploy: `git pull`, instalação das dependências, build da API, migrações do Prisma, reload dos processos no PM2 e export web do app (Documento Técnico 15.3).
