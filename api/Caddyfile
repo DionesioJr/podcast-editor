@@ -10,6 +10,12 @@
 #
 # Uso: DOMAIN=editor.exemplo.com caddy run --config api/Caddyfile
 
+# Upstream único da API: trocar host ou porta aqui vale para todos os handles
+# que fazem import. O bloco SSE fica de fora porque precisa desligar o buffer.
+(api_upstream) {
+	reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
+}
+
 {$DOMAIN:localhost} {
 	# SSE do progresso: sem buffer, senão os eventos chegam em bloco (Documento Técnico 12).
 	# O matcher "path" do Caddy só aceita curinga no fim, então a rota com id no
@@ -23,20 +29,20 @@
 
 	# /v1/* cobre as rotas com subcaminho; este handle cobre a rota nua /v1.
 	handle /v1 {
-		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
+		import api_upstream
 	}
 
 	handle /v1/* {
-		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
+		import api_upstream
 	}
 
 	@docs path /docs /docs/* /docs-json
 	handle @docs {
-		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
+		import api_upstream
 	}
 
 	handle /health {
-		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
+		import api_upstream
 	}
 
 	# App web estático gerado por "expo export -p web" (Documento Técnico 15.3).

@@ -8,6 +8,7 @@ import { ResultadoDeComando } from './support/shell-harness';
 const RAIZ_DA_API = path.resolve(__dirname, '..');
 const CAMINHO_CADDYFILE = path.join(RAIZ_DA_API, 'Caddyfile');
 const CAMINHO_DEPLOY = path.join(RAIZ_DA_API, 'deploy.sh');
+const UPSTREAM = 'reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}';
 
 function posicao(texto: string, trecho: string): number {
   const indice = texto.indexOf(trecho);
@@ -36,6 +37,7 @@ const blocoSse = bloco('@sse path_regexp', 'handle /v1/*');
 const blocoV1 = bloco('handle /v1/*', '@docs');
 const blocoDocs = bloco('handle @docs', 'handle /health');
 const blocoEstatico = fonte.slice(posicao(fonte, 'handle {'));
+const blocoSnippet = bloco('(api_upstream)', '{$DOMAIN:localhost}');
 
 describe('Caddyfile do Podcast Editor (e2e)', () => {
   it('existe e aponta o upstream da API para um endereço configurável', () => {
@@ -54,19 +56,36 @@ describe('Caddyfile do Podcast Editor (e2e)', () => {
   });
 });
 
+describe('Caddyfile: upstream reutilizável (e2e)', () => {
+  it('define o snippet de reverse_proxy uma única vez', () => {
+    expect(fonte).toMatch(/\(api_upstream\)\s*\{/);
+    expect(blocoSnippet).toMatch(/reverse_proxy \{\$API_UPSTREAM/);
+    expect(fonte.split(UPSTREAM)).toHaveLength(3);
+  });
+
+  it('importa o snippet nos quatro handles da API', () => {
+    expect(fonte.split('import api_upstream')).toHaveLength(5);
+  });
+
+  it('mantém o flush_interval -1 apenas no bloco SSE', () => {
+    expect(fonte.split('flush_interval -1')).toHaveLength(2);
+    expect(blocoV1).not.toMatch(/flush_interval/);
+  });
+});
+
 describe('Caddyfile: encaminhamento da API (e2e)', () => {
   it('encaminha /v1 para a API', () => {
-    expect(blocoV1).toMatch(/reverse_proxy \{\$API_UPSTREAM:127\.0\.0\.1:3000\}/);
+    expect(blocoV1).toMatch(/import api_upstream/);
   });
 
   it('encaminha /docs, /docs/* e /docs-json para a API', () => {
     expect(fonte).toContain('@docs path /docs /docs/* /docs-json');
-    expect(blocoDocs).toMatch(/reverse_proxy \{\$API_UPSTREAM:127\.0\.0\.1:3000\}/);
+    expect(blocoDocs).toMatch(/import api_upstream/);
   });
 
   it('encaminha /health para a API', () => {
     const blocoHealth = bloco('handle /health', 'handle {');
-    expect(blocoHealth).toMatch(/reverse_proxy \{\$API_UPSTREAM:127\.0\.0\.1:3000\}/);
+    expect(blocoHealth).toMatch(/import api_upstream/);
   });
 
   it('não encaminha rotas de arquivo para a API', () => {
