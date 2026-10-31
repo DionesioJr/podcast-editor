@@ -20,22 +20,9 @@ const useRouterMock = useRouter as unknown as jest.Mock;
 
 const PROJECT_ID = 'projeto-1';
 
-const ALL_ACTIONS: ErrorActionType[] = [
-  'choose_file',
-  'wait',
-  'retry',
-  'continue',
-  'discard',
-  'retry_later',
-  'continue_manually',
-  'rewrite',
-  'adjust',
-  'go_to_review',
-  'select_format',
-  'download',
-  'new_project',
-];
-
+// Um code por tipo. Como os mapas são tipados como Record<ErrorActionType, ...>,
+// um 14º tipo em app/src/i18n/error-actions.ts quebra este arquivo em
+// compilação, em vez de deixar a suíte passar sem cobrir o destino do tipo novo.
 const CODE_FOR_ACTION: Record<ErrorActionType, string> = {
   choose_file: 'INVALID_FILE_FORMAT',
   wait: 'UPLOAD_CONNECTION_LOST',
@@ -52,13 +39,48 @@ const CODE_FOR_ACTION: Record<ErrorActionType, string> = {
   new_project: 'PROJECT_EXPIRED',
 };
 
-const ROUTE_FOR_ACTION: Partial<Record<ErrorActionType, string>> = {
+// Destino esperado de cada tipo. null marca o fallback de voltar declarado no
+// mapa de produção de app/app/error.tsx. Tipar como Record garante que os 13
+// tipos da união estão declarados aqui, com a rota ou com o fallback.
+const ROUTE_FOR_ACTION: Record<ErrorActionType, string | null> = {
+  choose_file: null,
+  wait: null,
+  retry: null,
+  continue: null,
+  discard: null,
+  retry_later: null,
+  continue_manually: null,
+  rewrite: null,
   adjust: `/p/${PROJECT_ID}`,
   go_to_review: `/p/${PROJECT_ID}/review`,
   select_format: `/p/${PROJECT_ID}/export`,
   download: `/p/${PROJECT_ID}/export`,
   new_project: '/',
 };
+
+const ALL_ACTIONS = Object.keys(ROUTE_FOR_ACTION) as ErrorActionType[];
+const ROUTE_ACTIONS = ALL_ACTIONS.filter(
+  (type) => ROUTE_FOR_ACTION[type] !== null,
+);
+const FALLBACK_ACTIONS = ALL_ACTIONS.filter(
+  (type) => ROUTE_FOR_ACTION[type] === null,
+);
+const PROJECT_ACTIONS: ErrorActionType[] = [
+  'adjust',
+  'go_to_review',
+  'select_format',
+  'download',
+];
+
+// Tipos realmente usados por error-actions.ts em tempo de execução. Comparar
+// com ALL_ACTIONS ancora a cobertura na fonte, não numa lista escrita à mão.
+const SOURCE_ACTIONS = Array.from(
+  new Set(
+    Object.values(ERROR_ACTIONS).flatMap((actions) =>
+      actions.map((action) => action.type),
+    ),
+  ),
+).sort();
 
 function prenderRouter(canGoBack: boolean) {
   canGoBackMock.mockReturnValue(canGoBack);
@@ -74,14 +96,27 @@ function abrirErro(code: string, projectId?: string) {
   render(<ErrorRoute />);
 }
 
+function preparar(
+  type: ErrorActionType,
+  opcoes: { canGoBack: boolean; projectId?: string },
+) {
+  prenderRouter(opcoes.canGoBack);
+  abrirErro(CODE_FOR_ACTION[type], opcoes.projectId);
+}
+
+function acaoDoTipo(type: ErrorActionType) {
+  const code = CODE_FOR_ACTION[type];
+  const action = ERROR_ACTIONS[code]?.find((item) => item.type === type);
+
+  if (!action) {
+    throw new Error(`O code ${code} não oferece a ação do tipo ${type}.`);
+  }
+
+  return action;
+}
+
 function pressionar(type: ErrorActionType) {
-  const action = ERROR_ACTIONS[CODE_FOR_ACTION[type]].find(
-    (item) => item.type === type,
-  );
-
-  if (!action) throw new Error(`Sem ação do tipo ${type} em CODE_FOR_ACTION.`);
-
-  fireEvent.press(screen.getByText(action.label));
+  fireEvent.press(screen.getByText(acaoDoTipo(type).label));
 }
 
 describe('Rota de erro /error (PDE-101)', () => {
@@ -164,12 +199,25 @@ describe('Mapa de ErrorActionType para rota (PDE-123)', () => {
     prenderRouter(true);
   });
 
-  it('cobre os 13 tipos de ação da tela de erro', () => {
-    expect(Object.keys(CODE_FOR_ACTION).sort()).toEqual([...ALL_ACTIONS].sort());
+  it('cobre exatamente os tipos que error-actions.ts usa', () => {
+    expect(SOURCE_ACTIONS).toEqual([...ALL_ACTIONS].sort());
   });
 
+  it.each(ALL_ACTIONS)(
+    'o code declarado para %s realmente oferece esse tipo',
+    (type) => {
+      const code = CODE_FOR_ACTION[type];
+
+      expect(ERROR_ACTIONS[code]).toBeDefined();
+      expect(ERROR_ACTIONS[code].some((action) => action.type === type)).toBe(
+        true,
+      );
+      expect(acaoDoTipo(type).type).toBe(type);
+    },
+  );
+
   it.each(ALL_ACTIONS)('leva %s para o destino declarado no mapa', (type) => {
-    abrirErro(CODE_FOR_ACTION[type], PROJECT_ID);
+    preparar(type, { canGoBack: true, projectId: PROJECT_ID });
 
     pressionar(type);
 
@@ -182,16 +230,25 @@ describe('Mapa de ErrorActionType para rota (PDE-123)', () => {
       return;
     }
 
-    expect(canGoBackMock).toHaveBeenCalledTimes(1);
     expect(backMock).toHaveBeenCalledTimes(1);
     expect(replaceMock).not.toHaveBeenCalled();
   });
 
-  it.each(ALL_ACTIONS.filter((type) => !ROUTE_FOR_ACTION[type]))(
+  it.each(ROUTE_ACTIONS)(
+    'não deixa %s cair em router.back genérico',
+    (type) => {
+      preparar(type, { canGoBack: true, projectId: PROJECT_ID });
+
+      pressionar(type);
+
+      expect(backMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(FALLBACK_ACTIONS)(
     'usa a tela inicial como fallback de %s quando não há histórico',
     (type) => {
-      prenderRouter(false);
-      abrirErro(CODE_FOR_ACTION[type], PROJECT_ID);
+      preparar(type, { canGoBack: false, projectId: PROJECT_ID });
 
       pressionar(type);
 
@@ -200,11 +257,10 @@ describe('Mapa de ErrorActionType para rota (PDE-123)', () => {
     },
   );
 
-  it.each(['adjust', 'go_to_review', 'select_format', 'download'] as const)(
+  it.each(PROJECT_ACTIONS)(
     'usa o fallback declarado de %s quando a URL não traz projectId',
     (type) => {
-      prenderRouter(false);
-      abrirErro(CODE_FOR_ACTION[type]);
+      preparar(type, { canGoBack: false });
 
       pressionar(type);
 
@@ -216,14 +272,22 @@ describe('Mapa de ErrorActionType para rota (PDE-123)', () => {
     },
   );
 
-  it('leva a ação new_project para a tela inicial mesmo com histórico', () => {
-    prenderRouter(true);
-    abrirErro('PROJECT_EXPIRED');
+  it('leva new_project para a tela inicial mesmo com histórico', () => {
+    preparar('new_project', { canGoBack: true });
 
     pressionar('new_project');
 
     expect(replaceMock).toHaveBeenCalledWith('/');
     expect(backMock).not.toHaveBeenCalled();
     expect(canGoBackMock).not.toHaveBeenCalled();
+  });
+
+  it('leva new_project para a tela inicial mesmo sem histórico', () => {
+    preparar('new_project', { canGoBack: false });
+
+    pressionar('new_project');
+
+    expect(replaceMock).toHaveBeenCalledWith('/');
+    expect(backMock).not.toHaveBeenCalled();
   });
 });
