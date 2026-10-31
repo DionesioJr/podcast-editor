@@ -83,8 +83,9 @@ pnpm --dir "$API_DIR" exec prisma migrate deploy
 
 log "5/6 Recarregando os processos do PM2"
 # startOrReload sobe os processos no primeiro deploy e recarrega os seguintes.
-# Sem --update-env: o PM2 usa o env do ecosystem.config.js e o deploy não mexe no NODE_ENV (PDE-119).
-pm2 startOrReload "$PM2_CONFIG"
+# NODE_ENV=production explícito e sem --update-env: mesmo com NODE_ENV=development
+# em api/.env, a API e o worker sobem em produção pelo env do ecosystem.config.js (PDE-119).
+NODE_ENV=production pm2 startOrReload "$PM2_CONFIG"
 
 log "6/6 Exportando o app web"
 if [[ "${SKIP_APP:-0}" == "1" ]]; then
