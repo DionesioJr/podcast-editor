@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './modules/health/health.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { validate } from './common/config/config.schema';
 
@@ -26,6 +27,7 @@ import { validate } from './common/config/config.schema';
     }),
     SharedModule,
     HealthModule,
+    JobsModule,
     ProjectsModule,
   ],
   providers: [
