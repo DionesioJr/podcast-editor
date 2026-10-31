@@ -23,6 +23,13 @@
   "UPLOAD_FAILED": "Falha ao fazer upload do arquivo. Tente novamente.",
   "PROJECT_NOT_FOUND": "Projeto não encontrado.",
   "INVALID_TOKEN": "Token inválido ou expirado.",
+  "VALIDATION_ERROR": "Alguns dados enviados estão incorretos. Revise e tente novamente.",
+  "UNAUTHORIZED": "Sua sessão expirou. Abra o projeto novamente.",
+  "FORBIDDEN": "Você não tem permissão para fazer isso.",
+  "NOT_FOUND": "Não encontramos o que você procura.",
+  "CONFLICT": "Não foi possível concluir a ação agora. Tente novamente.",
+  "RATE_LIMIT_EXCEEDED": "Você fez muitas solicitações em pouco tempo. Aguarde um instante e tente novamente.",
+  "INTERNAL_ERROR": "Erro no servidor. Tente novamente mais tarde.",
   "SERVER_ERROR": "Erro no servidor. Tente novamente mais tarde.",
   "NETWORK_ERROR": "Erro de conexão. Verifique sua internet.",
   "TIMEOUT": "Tempo limite excedido. Tente novamente."
