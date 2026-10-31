@@ -71,9 +71,24 @@ function caminhoOriginal(): string {
 export interface AmbienteDeDeploy {
   pasta: string;
   log: string;
+  envDaApi: string;
   rodar(extras: NodeJS.ProcessEnv, remover?: string[]): ResultadoDeComando;
   lerLinhas(): string[];
   posicao(trecho: string): number;
+}
+
+// Reproduz o api/.env de desenvolvimento: o deploy carrega esse arquivo com
+// set -a, então o NODE_ENV=development dele chega ao shell inteiro do deploy.
+function criarEnvDaApi(pasta: string): string {
+  const pastaApi = path.join(pasta, 'api');
+
+  fs.mkdirSync(pastaApi, { recursive: true });
+
+  const caminho = path.join(pastaApi, '.env');
+
+  fs.writeFileSync(caminho, 'NODE_ENV=development\n');
+
+  return caminho;
 }
 
 export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
@@ -83,6 +98,7 @@ export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
 
   const pastaBin = criarBinariosFalsos(pasta);
   const log = path.join(pasta, 'comandos.log');
+  const envDaApi = criarEnvDaApi(pasta);
 
   function rodar(extras: NodeJS.ProcessEnv, remover: string[] = []): ResultadoDeComando {
     const ambiente: NodeJS.ProcessEnv = {
@@ -90,6 +106,8 @@ export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
       PATH: `${pastaBin}${path.delimiter}${caminhoOriginal()}`,
       FAKE_LOG: log,
       EXPO_PUBLIC_API_URL: 'https://editor.exemplo.com',
+      REPO_DIR: pasta,
+      PM2_CONFIG: path.join(RAIZ_DA_API, 'ecosystem.config.js'),
       ...extras,
     };
 
@@ -131,5 +149,5 @@ export function criarAmbienteDeDeploy(): AmbienteDeDeploy {
     return indice;
   }
 
-  return { pasta, log, rodar, lerLinhas, posicao };
+  return { pasta, log, envDaApi, rodar, lerLinhas, posicao };
 }

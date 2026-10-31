@@ -63,6 +63,20 @@ descreverComShellPosix('deploy.sh: execução real com binários simulados', () 
     expect(posicoes).toEqual([...posicoes].sort((a, b) => a - b));
   });
 
+  it('recarrega o PM2 em produção mesmo com NODE_ENV=development no .env da API', () => {
+    expect(fs.readFileSync(ambiente.envDaApi, 'utf8')).toContain('NODE_ENV=development');
+
+    const resultado = ambiente.rodar({});
+
+    expect(resultado.status).toBe(0);
+
+    const linhaPm2 = ambiente.lerLinhas().find((linha) => linha.includes('startOrReload'));
+
+    expect(linhaPm2).toBeDefined();
+    expect(linhaPm2).toContain('NODE_ENV=production');
+    expect(linhaPm2).not.toContain('--update-env');
+  });
+
   it('instala as dependências sem --prod, para o build ter as devDependencies', () => {
     const resultado = ambiente.rodar({});
 
