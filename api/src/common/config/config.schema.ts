@@ -52,6 +52,22 @@ export class EnvironmentVariables {
 
   @IsNumber()
   @IsOptional()
+  PROCESS_CONCURRENCY: number = 2;
+
+  @IsNumber()
+  @IsOptional()
+  AI_ANALYSIS_CONCURRENCY: number = 4;
+
+  @IsNumber()
+  @IsOptional()
+  AUDIO_SAMPLE_CONCURRENCY: number = 2;
+
+  @IsNumber()
+  @IsOptional()
+  WORKER_STALE_LOCK_MS: number = 300000;
+
+  @IsNumber()
+  @IsOptional()
   LIMIT_MAX_SIZE_BYTES: number = 2147483648;
 
   @IsNumber()

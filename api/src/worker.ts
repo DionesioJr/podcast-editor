@@ -2,9 +2,15 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 
+process.env.APP_ROLE = 'worker';
+
 async function bootstrap() {
-  const app = await NestFactory.createApplicationContext(AppModule);
-  app.enableShutdownHooks();
+  try {
+    const app = await NestFactory.createApplicationContext(AppModule);
+    app.enableShutdownHooks();
+  } finally {
+    delete process.env.APP_ROLE;
+  }
 }
 
 bootstrap().catch((erro) => {
