@@ -1,7 +1,6 @@
 jest.mock('@nestjs/core', () => ({
   NestFactory: {
     create: jest.fn(),
-    createApplicationContext: jest.fn(),
   },
 }));
 
@@ -33,7 +32,6 @@ jest.mock('../src/app.module', () => ({
 interface ModulosMockados {
   NestFactory: {
     create: jest.Mock;
-    createApplicationContext: jest.Mock;
   };
   AppModule: unknown;
 }
@@ -84,18 +82,50 @@ describe('main da API (e2e)', () => {
     await aguardarPromessas();
 
     expect(NestFactory.create).toHaveBeenCalledWith(AppModule);
-    expect(NestFactory.createApplicationContext).not.toHaveBeenCalled();
   });
 
-  it('abre a porta HTTP a partir do PORT do ambiente', async () => {
-    const { NestFactory } = carregarModulosMockados();
-    const aplicacao = criarAplicacaoFalsa();
-    NestFactory.create.mockResolvedValue(aplicacao);
+  it('usa a porta 3000 como padrão quando PORT não está definida', async () => {
+    const anterior = process.env.PORT;
+    delete process.env.PORT;
 
-    require('../src/main');
-    await aguardarPromessas();
+    try {
+      const { NestFactory } = carregarModulosMockados();
+      const aplicacao = criarAplicacaoFalsa();
+      NestFactory.create.mockResolvedValue(aplicacao);
 
-    expect(aplicacao.listen).toHaveBeenCalledWith(process.env.PORT ?? 3000);
+      require('../src/main');
+      await aguardarPromessas();
+
+      expect(aplicacao.listen).toHaveBeenCalledWith(3000);
+    } finally {
+      if (anterior === undefined) {
+        delete process.env.PORT;
+      } else {
+        process.env.PORT = anterior;
+      }
+    }
+  });
+
+  it('usa a porta definida em PORT quando ela existe', async () => {
+    const anterior = process.env.PORT;
+    process.env.PORT = '4321';
+
+    try {
+      const { NestFactory } = carregarModulosMockados();
+      const aplicacao = criarAplicacaoFalsa();
+      NestFactory.create.mockResolvedValue(aplicacao);
+
+      require('../src/main');
+      await aguardarPromessas();
+
+      expect(aplicacao.listen).toHaveBeenCalledWith('4321');
+    } finally {
+      if (anterior === undefined) {
+        delete process.env.PORT;
+      } else {
+        process.env.PORT = anterior;
+      }
+    }
   });
 
   it('não encerra o processo nem registra erro quando a API sobe', async () => {
@@ -109,7 +139,7 @@ describe('main da API (e2e)', () => {
     expect(erroMock).not.toHaveBeenCalled();
   });
 
-  it('registra a falha e encerra com código 1 quando a subida da API falha', async () => {
+  it('registra a falha e encerra com código 1 quando criar a aplicação falha', async () => {
     const { NestFactory } = carregarModulosMockados();
     const erro = new Error('banco indisponível');
     NestFactory.create.mockRejectedValue(erro);
@@ -119,16 +149,6 @@ describe('main da API (e2e)', () => {
 
     expect(erroMock).toHaveBeenCalledWith('Falha ao iniciar a API', erro);
     expect(encerrarMock).toHaveBeenCalledWith(1);
-  });
-
-  it('não cria contexto de worker quando a subida da API falha', async () => {
-    const { NestFactory } = carregarModulosMockados();
-    NestFactory.create.mockRejectedValue(new Error('banco indisponível'));
-
-    require('../src/main');
-    await aguardarPromessas();
-
-    expect(NestFactory.createApplicationContext).not.toHaveBeenCalled();
   });
 
   it('registra a falha e encerra com código 1 quando abrir a porta HTTP falha', async () => {
@@ -142,6 +162,30 @@ describe('main da API (e2e)', () => {
     await aguardarPromessas();
 
     expect(erroMock).toHaveBeenCalledWith('Falha ao iniciar a API', erro);
+    expect(encerrarMock).toHaveBeenCalledWith(1);
+  });
+
+  it('registra um único erro e um único encerramento com código 1 quando a subida falha', async () => {
+    const { NestFactory } = carregarModulosMockados();
+    NestFactory.create.mockRejectedValue(new Error('variável de ambiente inválida'));
+
+    require('../src/main');
+    await aguardarPromessas();
+
+    expect(erroMock).toHaveBeenCalledTimes(1);
+    expect(encerrarMock).toHaveBeenCalledTimes(1);
+    expect(encerrarMock).toHaveBeenCalledWith(1);
+  });
+
+  it('preserva e registra o motivo da rejeição mesmo quando não é um Error', async () => {
+    const { NestFactory } = carregarModulosMockados();
+    const motivo = 'configuração inválida';
+    NestFactory.create.mockRejectedValue(motivo);
+
+    require('../src/main');
+    await aguardarPromessas();
+
+    expect(erroMock).toHaveBeenCalledWith('Falha ao iniciar a API', motivo);
     expect(encerrarMock).toHaveBeenCalledWith(1);
   });
 });
