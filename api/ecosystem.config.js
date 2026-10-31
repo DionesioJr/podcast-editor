@@ -5,8 +5,8 @@ const logDir = process.env.PM2_LOG_DIR || '/var/log/pm2';
 
 try {
   fs.mkdirSync(logDir, { recursive: true });
-} catch {
-  // Melhor esforço: o caminho pode não existir ou não ser gravável.
+} catch (erro) {
+  console.error(`Não foi possível criar o diretório de log do PM2 em ${logDir}`, erro);
 }
 
 const apiLogs = {

@@ -1,3 +1,4 @@
+import * as os from 'os';
 import * as path from 'path';
 
 interface ProcessoPm2 {
@@ -111,6 +112,61 @@ describe('ecosystem.config.js do PM2 (e2e)', () => {
 
       expect(processo.exec_mode).toBe('fork');
       expect(processo.instances).toBe(1);
+    }
+  });
+});
+
+describe('diretório de log configurável do ecosystem.config.js (e2e)', () => {
+  const envOriginal = process.env.PM2_LOG_DIR;
+  let erroMock: jest.SpyInstance;
+
+  beforeEach(() => {
+    erroMock = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    erroMock.mockRestore();
+    jest.resetModules();
+
+    if (envOriginal === undefined) {
+      delete process.env.PM2_LOG_DIR;
+    } else {
+      process.env.PM2_LOG_DIR = envOriginal;
+    }
+  });
+
+  it('usa /var/log/pm2 como padrão quando PM2_LOG_DIR não está definida', () => {
+    delete process.env.PM2_LOG_DIR;
+    jest.resetModules();
+    const config = carregarEcosystem();
+
+    for (const app of config.apps) {
+      expect(app.error_file).toBe(path.join('/var/log/pm2', `${app.name}-error.log`));
+      expect(app.out_file).toBe(path.join('/var/log/pm2', `${app.name}-out.log`));
+    }
+  });
+
+  it('deriva error_file e out_file de PM2_LOG_DIR quando ela está definida', () => {
+    const diretorio = path.join(os.tmpdir(), 'pm2-logs-pde-117');
+    process.env.PM2_LOG_DIR = diretorio;
+    jest.resetModules();
+    const config = carregarEcosystem();
+
+    for (const app of config.apps) {
+      expect(app.error_file).toBe(path.join(diretorio, `${app.name}-error.log`));
+      expect(app.out_file).toBe(path.join(diretorio, `${app.name}-out.log`));
+    }
+  });
+
+  it('não mantém caminho absoluto fixo quando PM2_LOG_DIR aponta para outro diretório', () => {
+    const diretorio = path.join(os.tmpdir(), 'pm2-logs-alternativo');
+    process.env.PM2_LOG_DIR = diretorio;
+    jest.resetModules();
+    const config = carregarEcosystem();
+
+    for (const app of config.apps) {
+      expect(path.dirname(app.error_file ?? '')).toBe(diretorio);
+      expect(path.dirname(app.out_file ?? '')).toBe(diretorio);
     }
   });
 });
