@@ -66,5 +66,6 @@ export const ERROR_ACTIONS: Record<string, ErrorAction[]> = {
 };
 
 export function getErrorActions(code: string): ErrorAction[] {
-  return ERROR_ACTIONS[code] ?? [];
+  if (!Object.hasOwn(ERROR_ACTIONS, code)) return [];
+  return ERROR_ACTIONS[code];
 }
