@@ -23,9 +23,9 @@ i18next.use(initReactI18next).init({
   },
 });
 
+const ERRORS = resources['pt-BR'].translation.errors as Record<string, string>;
+
 export function getErrorMessage(code: string): string {
-  return (
-    (resources['pt-BR'].translation.errors as Record<string, string>)[code] ||
-    'Erro desconhecido.'
-  );
+  if (!Object.hasOwn(ERRORS, code)) return 'Erro desconhecido.';
+  return ERRORS[code];
 }
