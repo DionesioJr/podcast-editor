@@ -23,6 +23,48 @@ describe('ApiError (PDE-6)', () => {
   });
 });
 
+describe('ApiError com detail da API (PDE-9)', () => {
+  it('prefere o detail da API à tradução quando ele traz os valores reais', () => {
+    const erro = new ApiError(
+      'VIDEO_TOO_LARGE',
+      413,
+      'Esse vídeo tem 4 GB. O limite é 2 GB.',
+    );
+
+    expect(erro.message).toBe('Esse vídeo tem 4 GB. O limite é 2 GB.');
+    expect(erro.detail).toBe('Esse vídeo tem 4 GB. O limite é 2 GB.');
+    expect(erro.code).toBe('VIDEO_TOO_LARGE');
+  });
+
+  it('mantém a tradução quando o detail é uma mensagem padrão do HTTP', () => {
+    const erro = new ApiError('VALIDATION_ERROR', 400, 'Bad Request');
+
+    expect(erro.message).toBe(
+      'Alguns dados enviados estão incorretos. Revise e tente novamente.',
+    );
+  });
+
+  it('ignora o detail quando o code é desconhecido e cai na genérica', () => {
+    const erro = new ApiError('CODIGO_INEXISTENTE', 500, 'texto cru do servidor');
+
+    expect(erro.message).toBe('Erro desconhecido.');
+    expect(erro.detail).toBe('texto cru do servidor');
+  });
+
+  it('mantém a tradução quando o detail vem só com espaços', () => {
+    const erro = new ApiError('PROJECT_NOT_FOUND', 404, '   ');
+
+    expect(erro.message).toBe('Projeto não encontrado.');
+  });
+
+  it('mantém a tradução quando não há detail', () => {
+    const erro = new ApiError('PROJECT_NOT_FOUND', 404);
+
+    expect(erro.message).toBe('Projeto não encontrado.');
+    expect(erro.detail).toBeUndefined();
+  });
+});
+
 describe('handleApiError (PDE-6)', () => {
   it('repassa um ApiError sem alterar nada', () => {
     const original = new ApiError('UPLOAD_FAILED');
