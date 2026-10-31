@@ -48,4 +48,7 @@ async function bootstrap() {
   await app.listen(port);
 }
 
-bootstrap();
+bootstrap().catch((erro) => {
+  console.error('Falha ao iniciar a API', erro);
+  process.exit(1);
+});

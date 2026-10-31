@@ -1,3 +1,4 @@
+import * as os from 'os';
 import * as path from 'path';
 
 interface ProcessoPm2 {
@@ -23,6 +24,7 @@ interface EcosystemConfig {
 const RAIZ_DA_API = path.resolve(__dirname, '..');
 const CAMINHO_ECOSYSTEM = path.join(RAIZ_DA_API, 'ecosystem.config.js');
 const NOMES_ESPERADOS = ['podcast-api', 'podcast-worker'];
+const DIRETORIO_PADRAO = '/var/log/pm2';
 
 function carregarEcosystem(): EcosystemConfig {
   return require(CAMINHO_ECOSYSTEM) as EcosystemConfig;
@@ -112,5 +114,109 @@ describe('ecosystem.config.js do PM2 (e2e)', () => {
       expect(processo.exec_mode).toBe('fork');
       expect(processo.instances).toBe(1);
     }
+  });
+});
+
+describe('diretório de log configurável do ecosystem.config.js (e2e)', () => {
+  const envOriginal = process.env.PM2_LOG_DIR;
+  const fsReal = require('fs') as typeof import('fs');
+  let erroMock: jest.SpyInstance;
+
+  beforeEach(() => {
+    erroMock = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.resetModules();
+
+    if (envOriginal === undefined) {
+      delete process.env.PM2_LOG_DIR;
+    } else {
+      process.env.PM2_LOG_DIR = envOriginal;
+    }
+  });
+
+  it('usa /var/log/pm2 como padrão quando PM2_LOG_DIR não está definida', () => {
+    delete process.env.PM2_LOG_DIR;
+    jest.resetModules();
+    const config = carregarEcosystem();
+
+    for (const app of config.apps) {
+      expect(app.error_file).toBe(path.join(DIRETORIO_PADRAO, `${app.name}-error.log`));
+      expect(app.out_file).toBe(path.join(DIRETORIO_PADRAO, `${app.name}-out.log`));
+    }
+  });
+
+  it('cai no diretório padrão quando PM2_LOG_DIR está vazia', () => {
+    process.env.PM2_LOG_DIR = '';
+    jest.resetModules();
+    const config = carregarEcosystem();
+
+    for (const app of config.apps) {
+      expect(app.error_file).toBe(path.join(DIRETORIO_PADRAO, `${app.name}-error.log`));
+      expect(app.out_file).toBe(path.join(DIRETORIO_PADRAO, `${app.name}-out.log`));
+    }
+  });
+
+  it('deriva os quatro arquivos de log de PM2_LOG_DIR quando ela está definida', () => {
+    const diretorio = path.join(os.tmpdir(), 'pm2-logs-pde-117');
+    process.env.PM2_LOG_DIR = diretorio;
+    jest.resetModules();
+    const config = carregarEcosystem();
+
+    const arquivos = config.apps.flatMap((app) => [app.error_file, app.out_file]);
+
+    expect(arquivos).toHaveLength(NOMES_ESPERADOS.length * 2);
+    for (const arquivo of arquivos) {
+      expect(path.dirname(arquivo ?? '')).toBe(diretorio);
+    }
+  });
+
+  it('não mantém caminho absoluto fixo quando PM2_LOG_DIR aponta para outro diretório', () => {
+    const diretorio = path.join(os.tmpdir(), 'pm2-logs-alternativo');
+    process.env.PM2_LOG_DIR = diretorio;
+    jest.resetModules();
+    const config = carregarEcosystem();
+
+    for (const app of config.apps) {
+      expect(app.error_file ?? '').not.toContain(DIRETORIO_PADRAO);
+      expect(app.out_file ?? '').not.toContain(DIRETORIO_PADRAO);
+      expect(path.dirname(app.error_file ?? '')).toBe(diretorio);
+      expect(path.dirname(app.out_file ?? '')).toBe(diretorio);
+    }
+  });
+
+  it('cria o diretório de log de forma recursiva antes de o PM2 abrir os arquivos', () => {
+    const diretorio = path.join(os.tmpdir(), 'pm2-logs-recursivo-pde-117');
+    const mkdirSpy = jest
+      .spyOn(fsReal, 'mkdirSync')
+      .mockImplementation((() => undefined) as never) as unknown as jest.SpyInstance;
+    process.env.PM2_LOG_DIR = diretorio;
+    jest.resetModules();
+
+    carregarEcosystem();
+
+    expect(mkdirSpy).toHaveBeenCalledWith(diretorio, { recursive: true });
+  });
+
+  it('registra o erro sem impedir o carregamento quando o diretório não pode ser criado', () => {
+    const erro = new Error('permissão negada');
+    const diretorio = path.join(os.tmpdir(), 'pm2-logs-sem-permissao');
+    const mkdirSpy = jest
+      .spyOn(fsReal, 'mkdirSync')
+      .mockImplementation((() => {
+        throw erro;
+      }) as never) as unknown as jest.SpyInstance;
+    process.env.PM2_LOG_DIR = diretorio;
+    jest.resetModules();
+
+    const config = carregarEcosystem();
+
+    expect(mkdirSpy).toHaveBeenCalledWith(diretorio, { recursive: true });
+    expect(erroMock).toHaveBeenCalledTimes(1);
+    expect(erroMock.mock.calls[0][0]).toContain(diretorio);
+    expect(erroMock.mock.calls[0][1]).toBe(erro);
+    expect(config.apps).toHaveLength(NOMES_ESPERADOS.length);
   });
 });
