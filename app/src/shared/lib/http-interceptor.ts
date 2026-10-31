@@ -3,6 +3,12 @@ import { ApiError } from './api-error';
 
 interface ApiErrorBody {
   code?: string;
+  message?: string;
+}
+
+export interface ExtractedError {
+  code: string;
+  message?: string;
 }
 
 const FALLBACK_CODE = 'SERVER_ERROR';
@@ -18,20 +24,36 @@ export function buildRequestUrl(endpoint: string): string {
   return url.toString();
 }
 
-export async function extractErrorCode(response: Response): Promise<string> {
+export async function extractError(
+  response: Response,
+): Promise<ExtractedError> {
   try {
     const body = (await response.json()) as ApiErrorBody;
-    const code = body?.code;
-    return typeof code === 'string' && code.trim() ? code : FALLBACK_CODE;
+    const code =
+      typeof body?.code === 'string' && body.code.trim()
+        ? body.code.trim()
+        : FALLBACK_CODE;
+    const message =
+      typeof body?.message === 'string' && body.message.trim()
+        ? body.message.trim()
+        : undefined;
+
+    return { code, message };
   } catch {
-    return FALLBACK_CODE;
+    return { code: FALLBACK_CODE };
   }
+}
+
+export async function extractErrorCode(response: Response): Promise<string> {
+  const { code } = await extractError(response);
+
+  return code;
 }
 
 export async function interceptResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const code = await extractErrorCode(response);
-    throw new ApiError(code, response.status);
+    const { code, message } = await extractError(response);
+    throw new ApiError(code, response.status, message);
   }
 
   if (response.status === 204) {
