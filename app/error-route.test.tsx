@@ -118,4 +118,17 @@ describe('Rota de erro /error (PDE-101)', () => {
     expect(replaceMock).not.toHaveBeenCalled();
     expect(backMock).not.toHaveBeenCalled();
   });
+
+  it.each(['toString', 'constructor', 'valueOf', '__proto__'])(
+    'trata o code herdado %s sem quebrar a tela',
+    (code) => {
+      useLocalSearchParamsMock.mockReturnValue({ code });
+
+      render(<ErrorRoute />);
+
+      expect(screen.getByText('Erro desconhecido.')).toBeTruthy();
+      expect(screen.queryByText('Tentar novamente')).toBeNull();
+      expect(screen.queryByText('Escolher outro arquivo')).toBeNull();
+    },
+  );
 });

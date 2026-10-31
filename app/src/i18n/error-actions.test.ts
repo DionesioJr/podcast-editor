@@ -1,4 +1,4 @@
-import { getErrorActions } from './error-actions';
+import { ERROR_ACTIONS, getErrorActions } from './error-actions';
 import { getErrorMessage } from './index';
 import erros from './errors.json';
 
@@ -102,6 +102,19 @@ describe('Cobertura de ações para todos os codes do errors.json (PDE-101)', ()
     '%s tem ao menos uma ação oferecida',
     (code) => {
       expect(getErrorActions(code).length).toBeGreaterThan(0);
+    },
+  );
+});
+
+describe('Mensagem própria para todo code que oferece ação (PDE-101)', () => {
+  it.each(Object.keys(ERROR_ACTIONS))(
+    '%s oferece ação sem cair no fallback genérico',
+    (code) => {
+      const mensagem = getErrorMessage(code);
+
+      expect(getErrorActions(code).length).toBeGreaterThan(0);
+      expect(mensagem.trim()).not.toBe('');
+      expect(mensagem).not.toBe('Erro desconhecido.');
     },
   );
 });
