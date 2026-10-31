@@ -64,6 +64,10 @@ load_env() {
 load_env "$API_DIR/.env"
 load_env "$APP_DIR/.env"
 
+# O api/.env de exemplo traz NODE_ENV=development; em produção forçamos
+# production para o PM2 não subir o app em modo de desenvolvimento (15.2).
+export NODE_ENV=production
+
 log "1/6 Atualizando o código em $REPO_DIR"
 if [[ -n "${DEPLOY_BRANCH:-}" ]]; then
   git -C "$REPO_DIR" fetch --prune origin "$DEPLOY_BRANCH"
@@ -92,6 +96,9 @@ if [[ "${SKIP_APP:-0}" == "1" ]]; then
 else
   [[ -n "${EXPO_PUBLIC_API_URL:-}" ]] || fail "Defina EXPO_PUBLIC_API_URL em $APP_DIR/.env para exportar o app web."
   pnpm --dir "$APP_DIR" install --frozen-lockfile
+  # A saída é $APP_DIR/dist. O Caddyfile precisa do mesmo caminho em APP_WEB_ROOT
+  # (padrão /srv/podcast-editor/app/dist, igual a app/dist com o repositório em
+  # /srv/podcast-editor); ajuste APP_WEB_ROOT no Caddy se clonar em outro lugar.
   pnpm --dir "$APP_DIR" exec expo export -p web --output-dir dist
 fi
 

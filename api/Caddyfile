@@ -4,13 +4,18 @@
 # Variáveis de ambiente:
 #   DOMAIN        domínio público, com HTTPS automático (padrão: localhost)
 #   API_UPSTREAM  endereço da API NestJS (padrão: 127.0.0.1:3000)
-#   APP_WEB_ROOT  pasta do app web exportado (padrão: /srv/podcast-editor/app/dist)
+#   APP_WEB_ROOT  pasta onde o deploy.sh exporta o app web (padrão:
+#                 /srv/podcast-editor/app/dist, que é app/dist com o repositório
+#                 em /srv/podcast-editor); aponte aqui se clonar em outro lugar
 #
 # Uso: DOMAIN=editor.exemplo.com caddy run --config api/Caddyfile
 
 {$DOMAIN:localhost} {
 	# SSE do progresso: sem buffer, senão os eventos chegam em bloco (Documento Técnico 12).
-	handle /v1/projects/*/events {
+	# O matcher "path" do Caddy só aceita curinga no fim, então a rota com id no
+	# meio do caminho (GET /v1/projects/:id/events) precisa de path_regexp.
+	@sse path_regexp ^/v1/projects/[^/]+/events$
+	handle @sse {
 		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000} {
 			flush_interval -1
 		}

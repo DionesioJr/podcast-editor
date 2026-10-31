@@ -27,7 +27,7 @@ function bloco(inicio: string, fim: string): string {
   return fonte.slice(de, ate);
 }
 
-const blocoSse = bloco('handle /v1/projects/*/events', 'handle /v1/*');
+const blocoSse = bloco('@sse path_regexp', 'handle /v1/*');
 const blocoV1 = bloco('handle /v1/*', '@docs');
 const blocoDocs = bloco('handle @docs', 'handle /health');
 const blocoEstatico = fonte.slice(posicao(fonte, 'handle {'));
@@ -74,8 +74,12 @@ describe('Caddyfile: fluxo SSE sem buffer (e2e)', () => {
     expect(blocoSse).toMatch(/flush_interval -1/);
   });
 
+  it('casa /v1/projects/:id/events por regexp, pois o matcher path só aceita curinga no fim', () => {
+    expect(fonte).toContain('@sse path_regexp ^/v1/projects/[^/]+/events$');
+  });
+
   it('define a rota específica de eventos antes da rota genérica /v1', () => {
-    expect(posicao(fonte, 'handle /v1/projects/*/events')).toBeLessThan(
+    expect(posicao(fonte, 'handle @sse')).toBeLessThan(
       posicao(fonte, 'handle /v1/*'),
     );
   });
