@@ -1,152 +1,289 @@
+import { spawnSync } from 'child_process';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 const RAIZ_DA_API = path.resolve(__dirname, '..');
+const RAIZ_DO_REPO = path.resolve(RAIZ_DA_API, '..');
 const CAMINHO_DEPLOY = path.join(RAIZ_DA_API, 'deploy.sh');
+const TEM_ENV_DO_APP = fs.existsSync(path.join(RAIZ_DO_REPO, 'app', '.env'));
 
-function posicao(texto: string, trecho: string): number {
-  const indice = texto.indexOf(trecho);
+interface ResultadoDeComando {
+  status: number | null;
+  stdout: string;
+  stderr: string;
+}
+
+const pastasTemporarias: string[] = [];
+
+// Os scripts desta tarefa são bash e dependem de userland GNU na VPS Linux;
+// fora do Linux a execução real do deploy é pulada com aviso.
+function temShellPosix(): boolean {
+  if (process.platform !== 'linux') {
+    return false;
+  }
+
+  const resultado = spawnSync('bash', ['--version'], { encoding: 'utf8' });
+
+  return resultado.error === undefined && resultado.status === 0;
+}
+
+const SHELL_POSIX = temShellPosix();
+
+function descreverComShellPosix(nome: string, definir: () => void): void {
+  if (SHELL_POSIX) {
+    describe(nome, definir);
+  } else {
+    describe.skip(
+      `${nome} (pulado: é preciso Linux com bash para executar o deploy)`,
+      definir,
+    );
+  }
+}
+
+function ambienteLimpo(): NodeJS.ProcessEnv {
+  const ambiente: NodeJS.ProcessEnv = { ...process.env };
+
+  for (const chave of [
+    'REPO_DIR',
+    'DEPLOY_BRANCH',
+    'PM2_CONFIG',
+    'SKIP_APP',
+    'SKIP_CRON',
+    'EXPO_PUBLIC_API_URL',
+    'NODE_ENV',
+  ]) {
+    delete ambiente[chave];
+  }
+
+  return ambiente;
+}
+
+// git, pnpm e pm2 falsos: registram o comando em FAKE_LOG e, quando
+// FAKE_FAIL_ARGS casa com os argumentos, saem com erro para testar o aborto.
+function criarBinariosFalsos(pasta: string): string {
+  const pastaBin = path.join(pasta, 'bin');
+
+  fs.mkdirSync(pastaBin, { recursive: true });
+
+  const script = [
+    '#!/usr/bin/env bash',
+    'nome="$(basename "$0")"',
+    'if [[ -n "${FAKE_LOG:-}" ]]; then',
+    `  printf "%s|%s|NODE_ENV=%s\\n" "$nome" "$*" "\${NODE_ENV:-}" >> "$FAKE_LOG"`,
+    'fi',
+    'if [[ -n "${FAKE_FAIL_ARGS:-}" && "$*" == *"$FAKE_FAIL_ARGS"* ]]; then',
+    '  exit 1',
+    'fi',
+    'exit 0',
+    '',
+  ].join('\n');
+
+  for (const nome of ['git', 'pnpm', 'pm2']) {
+    fs.writeFileSync(path.join(pastaBin, nome), script, { mode: 0o755 });
+  }
+
+  return pastaBin;
+}
+
+let pasta = '';
+let pastaBin = '';
+let log = '';
+
+beforeEach(() => {
+  pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'pde-deploy-'));
+  pastasTemporarias.push(pasta);
+  pastaBin = criarBinariosFalsos(pasta);
+  log = path.join(pasta, 'comandos.log');
+});
+
+afterAll(() => {
+  for (const pastaTemporaria of pastasTemporarias) {
+    fs.rmSync(pastaTemporaria, { recursive: true, force: true });
+  }
+});
+
+function caminhoOriginal(): string {
+  return process.env.PATH ?? process.env.Path ?? '/usr/local/bin:/usr/bin:/bin';
+}
+
+function rodarDeploy(extras: NodeJS.ProcessEnv, remover: string[] = []): ResultadoDeComando {
+  const ambiente: NodeJS.ProcessEnv = {
+    ...ambienteLimpo(),
+    PATH: `${pastaBin}${path.delimiter}${caminhoOriginal()}`,
+    FAKE_LOG: log,
+    SKIP_CRON: '1',
+    EXPO_PUBLIC_API_URL: 'https://editor.exemplo.com',
+    ...extras,
+  };
+
+  for (const chave of remover) {
+    delete ambiente[chave];
+  }
+
+  const resultado = spawnSync('bash', [CAMINHO_DEPLOY], {
+    encoding: 'utf8',
+    cwd: RAIZ_DO_REPO,
+    env: ambiente,
+  });
+
+  return {
+    status: resultado.status,
+    stdout: resultado.stdout ?? '',
+    stderr: resultado.stderr ?? '',
+  };
+}
+
+function lerLinhas(): string[] {
+  if (!fs.existsSync(log)) {
+    return [];
+  }
+
+  return fs
+    .readFileSync(log, 'utf8')
+    .split('\n')
+    .filter((linha) => linha.length > 0);
+}
+
+function posicao(linhas: string[], trecho: string): number {
+  const indice = linhas.findIndex((linha) => linha.includes(trecho));
 
   if (indice === -1) {
-    throw new Error(`Trecho não encontrado no deploy.sh: ${trecho}`);
+    throw new Error(`O deploy não executou o comando esperado: ${trecho}`);
   }
 
   return indice;
 }
 
-const fonte = fs.readFileSync(CAMINHO_DEPLOY, 'utf8');
-// O cabeçalho de uso também cita os passos; a ordem real fica no corpo do script.
-const corpo = fonte.slice(posicao(fonte, 'SCRIPT_DIR='));
+function linhaCom(linhas: string[], trecho: string): string {
+  return linhas[posicao(linhas, trecho)];
+}
 
-describe('deploy.sh do Podcast Editor (e2e)', () => {
-  it('existe e é declarado como script bash', () => {
+describe('deploy.sh do Podcast Editor', () => {
+  it('existe, é bash e encerra na primeira falha', () => {
     expect(fs.existsSync(CAMINHO_DEPLOY)).toBe(true);
+
+    const fonte = fs.readFileSync(CAMINHO_DEPLOY, 'utf8');
+
     expect(fonte.startsWith('#!/usr/bin/env bash')).toBe(true);
-  });
-
-  it('encerra na primeira falha e não segue com o deploy pela metade', () => {
     expect(fonte).toMatch(/set -euo pipefail/);
-  });
-});
-
-describe('deploy.sh: pré-requisitos e uso (e2e)', () => {
-  it('explica os pré-requisitos da VPS e o uso com --help', () => {
     expect(fonte).toMatch(/--help/);
-    expect(fonte).toMatch(/Pré-requisitos da VPS/);
-    expect(fonte).toMatch(/Uso: bash api\/deploy\.sh/);
-  });
-
-  it('responde ao --help antes de carregar qualquer arquivo .env', () => {
-    expect(posicao(fonte, '--help')).toBeLessThan(posicao(fonte, 'load_env'));
-  });
-
-  it.each(['git', 'pnpm', 'pm2'])('recusa rodar sem o %s no PATH', (binario) => {
-    expect(fonte).toContain(`command -v ${binario}`);
-  });
-
-  it('falha com mensagem clara quando a pasta da API não existe', () => {
-    expect(fonte).toMatch(/\[\[ -d "\$API_DIR" \]\] \|\| fail/);
-  });
-
-  it('falha com mensagem clara quando o arquivo do PM2 não existe', () => {
-    expect(fonte).toMatch(/\[\[ -f "\$PM2_CONFIG" \]\] \|\| fail/);
   });
 });
 
-describe('deploy.sh: passos do deploy (e2e)', () => {
-  it('atualiza o código com avanço rápido, sem merge automático', () => {
-    expect(corpo).toMatch(/git -C "\$REPO_DIR" pull --ff-only/);
+descreverComShellPosix('deploy.sh: execução real com binários simulados', () => {
+  it('responde ao --help sem exigir .env nem binários instalados', () => {
+    const resultado = spawnSync('bash', [CAMINHO_DEPLOY, '--help'], {
+      encoding: 'utf8',
+      cwd: RAIZ_DO_REPO,
+      env: ambienteLimpo(),
+    });
+
+    expect(resultado.status).toBe(0);
+    expect(resultado.stdout ?? '').toContain('Uso: bash api/deploy.sh');
   });
 
-  it('busca e troca de branch quando DEPLOY_BRANCH é definida', () => {
-    expect(corpo).toMatch(/DEPLOY_BRANCH/);
-    expect(corpo).toMatch(/git -C "\$REPO_DIR" fetch --prune origin/);
-    expect(corpo).toMatch(/git -C "\$REPO_DIR" checkout "\$DEPLOY_BRANCH"/);
-  });
+  it('executa pull, build, migrações, PM2 e export web na ordem do Documento Técnico 15.3', () => {
+    const resultado = rodarDeploy({});
 
-  it('instala as dependências com o lockfile congelado', () => {
-    expect(corpo).toMatch(/pnpm --dir "\$API_DIR" install --frozen-lockfile/);
-  });
+    expect(resultado.status).toBe(0);
 
-  it('compila a API antes de aplicar as migrações', () => {
-    expect(posicao(corpo, 'run build')).toBeLessThan(
-      posicao(corpo, 'prisma migrate deploy'),
-    );
-  });
-
-  it('aplica as migrações do Prisma com migrate deploy', () => {
-    expect(corpo).toMatch(/pnpm --dir "\$API_DIR" exec prisma migrate deploy/);
-  });
-
-  it('recarrega o PM2 com startOrReload, que também sobe no primeiro deploy', () => {
-    expect(corpo).toMatch(/pm2 startOrReload "\$PM2_CONFIG" --update-env/);
-  });
-
-  it('compila antes de recarregar e recarrega antes de migrar o código já compilado', () => {
-    expect(posicao(corpo, 'run build')).toBeLessThan(
-      posicao(corpo, 'pm2 startOrReload'),
-    );
-    expect(posicao(corpo, 'prisma migrate deploy')).toBeLessThan(
-      posicao(corpo, 'pm2 startOrReload'),
-    );
-  });
-
-  it('exporta o app web para a pasta dist do app', () => {
-    expect(corpo).toMatch(/APP_DIR="\$REPO_DIR\/app"/);
-    expect(corpo).toMatch(/expo export -p web --output-dir dist/);
-  });
-
-  it('força NODE_ENV=production depois de carregar o .env, para o PM2 não subir em desenvolvimento', () => {
-    expect(corpo).toMatch(/export NODE_ENV=production/);
-    expect(posicao(corpo, 'export NODE_ENV=production')).toBeGreaterThan(
-      posicao(corpo, 'load_env "$API_DIR/.env"'),
-    );
-    expect(posicao(corpo, 'export NODE_ENV=production')).toBeLessThan(
-      posicao(corpo, 'pm2 startOrReload'),
-    );
-  });
-
-  it('respeita a ordem do Documento Técnico 15.3: pull, build, migrações, PM2 e web', () => {
+    const linhas = lerLinhas();
     const etapas = [
-      'git -C "$REPO_DIR" pull --ff-only',
+      'pull --ff-only',
+      'install --frozen-lockfile',
       'run build',
       'prisma migrate deploy',
-      'pm2 startOrReload',
-      'expo export -p web',
-    ].map((trecho) => posicao(corpo, trecho));
+      'startOrReload',
+      'expo export -p web --output-dir dist',
+    ];
+    const posicoes = etapas.map((trecho) => posicao(linhas, trecho));
 
-    expect(etapas).toEqual([...etapas].sort((a, b) => a - b));
-  });
-});
-
-describe('deploy.sh: caminhos infelizes e de borda (e2e)', () => {
-  it('falha ao exportar o app quando falta EXPO_PUBLIC_API_URL', () => {
-    expect(corpo).toMatch(/EXPO_PUBLIC_API_URL/);
-    expect(corpo).toMatch(/Defina EXPO_PUBLIC_API_URL/);
-    expect(corpo).toMatch(/fail "Defina EXPO_PUBLIC_API_URL/);
+    expect(posicoes).toEqual([...posicoes].sort((a, b) => a - b));
   });
 
-  it('valida o EXPO_PUBLIC_API_URL antes de instalar e exportar o app', () => {
-    expect(posicao(corpo, 'Defina EXPO_PUBLIC_API_URL')).toBeLessThan(
-      posicao(corpo, 'expo export -p web'),
-    );
+  it('recarrega o PM2 com NODE_ENV=production mesmo com NODE_ENV=development no ambiente', () => {
+    const resultado = rodarDeploy({ NODE_ENV: 'development' });
+
+    expect(resultado.status).toBe(0);
+
+    const pm2 = linhaCom(lerLinhas(), 'startOrReload');
+
+    expect(pm2).toContain('--update-env');
+    expect(pm2).toContain('NODE_ENV=production');
   });
 
-  it('permite pular a exportação do app com SKIP_APP=1', () => {
-    expect(corpo).toMatch(/SKIP_APP/);
-    expect(corpo).toMatch(/Exportação do app web ignorada/);
+  it('instala as dependências sem --prod, para o build ter as devDependencies', () => {
+    const resultado = rodarDeploy({});
+
+    expect(resultado.status).toBe(0);
+
+    const linhasPnpm = lerLinhas().filter((linha) => linha.startsWith('pnpm|'));
+
+    expect(linhasPnpm.length).toBeGreaterThanOrEqual(4);
+
+    for (const linha of linhasPnpm) {
+      expect(linha).not.toContain('--prod');
+    }
   });
 
-  it('só instala o cron do backup quando roda como root', () => {
-    expect(corpo).toMatch(/id -u/);
-    expect(corpo).toContain('/etc/cron.d');
+  it('pula a exportação web quando SKIP_APP=1', () => {
+    const resultado = rodarDeploy({ SKIP_APP: '1' });
+
+    expect(resultado.status).toBe(0);
+
+    const linhas = lerLinhas();
+
+    expect(linhas.some((linha) => linha.includes('startOrReload'))).toBe(true);
+    expect(linhas.some((linha) => linha.includes('expo export -p web'))).toBe(false);
   });
 
-  it('avisa em vez de abortar quando não pode instalar o cron', () => {
-    expect(corpo).toMatch(/Aviso: sem permissão de root/);
+  it('para o deploy quando o pull falha, sem compilar, migrar nem recarregar o PM2', () => {
+    const resultado = rodarDeploy({ FAKE_FAIL_ARGS: 'pull --ff-only' });
+
+    expect(resultado.status).not.toBe(0);
+
+    const linhas = lerLinhas();
+
+    expect(linhas.some((linha) => linha.includes('pull --ff-only'))).toBe(true);
+    expect(linhas.some((linha) => linha.includes('run build'))).toBe(false);
+    expect(linhas.some((linha) => linha.includes('prisma migrate deploy'))).toBe(false);
+    expect(linhas.some((linha) => linha.includes('startOrReload'))).toBe(false);
+    expect(linhas.some((linha) => linha.includes('expo export -p web'))).toBe(false);
   });
 
-  it('permite pular a instalação do cron com SKIP_CRON=1', () => {
-    expect(corpo).toMatch(/SKIP_CRON/);
+  it('para antes de recarregar o PM2 quando as migrações falham', () => {
+    const resultado = rodarDeploy({ FAKE_FAIL_ARGS: 'prisma migrate deploy' });
+
+    expect(resultado.status).not.toBe(0);
+
+    const linhas = lerLinhas();
+
+    expect(linhas.some((linha) => linha.includes('run build'))).toBe(true);
+    expect(linhas.some((linha) => linha.includes('prisma migrate deploy'))).toBe(true);
+    expect(linhas.some((linha) => linha.includes('startOrReload'))).toBe(false);
+    expect(linhas.some((linha) => linha.includes('expo export -p web'))).toBe(false);
   });
+
+  it('recusa rodar quando o arquivo do PM2 não existe, antes de qualquer passo', () => {
+    const resultado = rodarDeploy({ PM2_CONFIG: path.join(pasta, 'inexistente.config.js') });
+
+    expect(resultado.status).not.toBe(0);
+    expect(resultado.stderr).toMatch(/Arquivo do PM2 não encontrado/);
+    expect(lerLinhas()).toEqual([]);
+  });
+
+  if (!TEM_ENV_DO_APP) {
+    it('falha ao exportar o app quando falta EXPO_PUBLIC_API_URL', () => {
+      const resultado = rodarDeploy({}, ['EXPO_PUBLIC_API_URL']);
+
+      expect(resultado.status).not.toBe(0);
+      expect(resultado.stderr).toMatch(/Defina EXPO_PUBLIC_API_URL/);
+
+      const linhas = lerLinhas();
+
+      expect(linhas.some((linha) => linha.includes('startOrReload'))).toBe(true);
+      expect(linhas.some((linha) => linha.includes('expo export -p web'))).toBe(false);
+    });
+  }
 });

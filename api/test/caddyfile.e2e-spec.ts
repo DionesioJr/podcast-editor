@@ -1,4 +1,6 @@
+import { spawnSync } from 'child_process';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 const RAIZ_DA_API = path.resolve(__dirname, '..');
@@ -142,5 +144,81 @@ describe('Caddyfile: app web estático (e2e)', () => {
     expect(deploy).toMatch(/APP_DIR="\$REPO_DIR\/app"/);
     expect(deploy).toMatch(/expo export -p web --output-dir dist/);
     expect(blocoEstatico).toMatch(/\{\$APP_WEB_ROOT:[^}]*\/app\/dist\}/);
+  });
+});
+
+interface ResultadoDeComando {
+  status: number | null;
+  stdout: string;
+  stderr: string;
+}
+
+function temCaddy(): boolean {
+  const resultado = spawnSync('caddy', ['version'], { encoding: 'utf8' });
+
+  return resultado.error === undefined && resultado.status === 0;
+}
+
+const CADDY_DISPONIVEL = temCaddy();
+
+// Quando o binário do Caddy não existe, a checagem de sintaxe é pulada com
+// aviso: o ambiente de testes não instala o Caddy, a VPS sim.
+function descreverComCaddy(nome: string, definir: () => void): void {
+  if (CADDY_DISPONIVEL) {
+    describe(nome, definir);
+  } else {
+    describe.skip(`${nome} (pulado: o binário caddy não está instalado neste ambiente)`, definir);
+  }
+}
+
+function validarCaddy(caminho: string): ResultadoDeComando {
+  const resultado = spawnSync('caddy', ['validate', '--config', caminho], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      DOMAIN: 'localhost',
+      API_UPSTREAM: '127.0.0.1:3000',
+      APP_WEB_ROOT: path.resolve(RAIZ_DA_API, '..', 'app', 'dist'),
+    },
+  });
+
+  return {
+    status: resultado.status,
+    stdout: resultado.stdout ?? '',
+    stderr: resultado.stderr ?? '',
+  };
+}
+
+descreverComCaddy('Caddyfile: validação com o binário caddy (execução real)', () => {
+  it('é aceito pelo caddy validate', () => {
+    const resultado = validarCaddy(CAMINHO_CADDYFILE);
+
+    if (resultado.status !== 0) {
+      throw new Error(
+        `caddy validate reprovou api/Caddyfile:\n${resultado.stdout}\n${resultado.stderr}`,
+      );
+    }
+  });
+
+  it('o caddy validate reprova o matcher antigo com curinga no meio do caminho', () => {
+    const caminhoInvalido = path.join(
+      os.tmpdir(),
+      `Caddyfile.invalido.${process.pid}.${Date.now()}`,
+    );
+    const conteudoInvalido = fonte.replace(
+      '@sse path_regexp ^/v1/projects/[^/]+/events$',
+      '@sse path /v1/projects/*/events',
+    );
+
+    expect(conteudoInvalido).not.toBe(fonte);
+    fs.writeFileSync(caminhoInvalido, conteudoInvalido);
+
+    try {
+      const resultado = validarCaddy(caminhoInvalido);
+
+      expect(resultado.status).not.toBe(0);
+    } finally {
+      fs.rmSync(caminhoInvalido, { force: true });
+    }
   });
 });
