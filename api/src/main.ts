@@ -6,6 +6,8 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { translateConstraints } from './common/validation/translate-constraints';
 
+process.env.APP_ROLE = 'api';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const port = process.env.PORT ?? 3000;

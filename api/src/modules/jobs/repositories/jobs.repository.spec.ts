@@ -1,3 +1,4 @@
+import { JobType } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from '@/shared/prisma/prisma.service';
@@ -14,7 +15,7 @@ describe('JobsRepository', () => {
   let transacao: TransacaoFalsa;
   let prisma: {
     $transaction: jest.Mock;
-    jobs: { update: jest.Mock };
+    jobs: { update: jest.Mock; updateMany: jest.Mock };
   };
 
   const jobReservado = {
@@ -38,7 +39,7 @@ describe('JobsRepository', () => {
     };
     prisma = {
       $transaction: jest.fn((callback: (tx: TransacaoFalsa) => unknown) => callback(transacao)),
-      jobs: { update: jest.fn() },
+      jobs: { update: jest.fn(), updateMany: jest.fn() },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -151,6 +152,117 @@ describe('JobsRepository', () => {
       transacao.jobs.update.mockRejectedValue(erro);
 
       await expect(repository.claimNextQueuedJob()).rejects.toThrow(erro);
+    });
+
+    it('aplica no SQL o tipo mapeado para o valor do banco quando um tipo é informado', async () => {
+      transacao.$queryRaw.mockResolvedValue([{ id: jobReservado.id }]);
+      transacao.jobs.update.mockResolvedValue(jobReservado);
+
+      await repository.claimNextQueuedJob(JobType.export_job);
+
+      const filtro = transacao.$queryRaw.mock.calls[0][2] as {
+        strings: string[];
+        values: unknown[];
+      };
+
+      expect(filtro.strings.join('')).toMatch(/AND type = /);
+      expect(filtro.values).toEqual(['export']);
+    });
+
+    it('não filtra por tipo quando nenhum tipo é informado', async () => {
+      transacao.$queryRaw.mockResolvedValue([{ id: jobReservado.id }]);
+      transacao.jobs.update.mockResolvedValue(jobReservado);
+
+      await repository.claimNextQueuedJob();
+
+      const filtro = transacao.$queryRaw.mock.calls[0][2] as {
+        strings: string[];
+        values: unknown[];
+      };
+
+      expect(filtro.strings.join('')).not.toMatch(/AND type/);
+      expect(filtro.values).toEqual([]);
+    });
+  });
+
+  describe('requeueStaleRunningJobs', () => {
+    type LinhaJob = { id: number; status: string; locked_at: Date | null };
+
+    const montarLinha = (
+      id: number,
+      status: string,
+      lockedAt: Date | null,
+    ): LinhaJob => ({ id, status, locked_at: lockedAt });
+
+    function casarWhere(
+      linha: LinhaJob,
+      where: { status?: string; OR?: Array<Record<string, unknown>> },
+    ): boolean {
+      if (where.status !== undefined && linha.status !== where.status) {
+        return false;
+      }
+      if (!where.OR) {
+        return true;
+      }
+      return where.OR.some((condicao) => {
+        const locked = condicao.locked_at;
+        if (locked === null) {
+          return linha.locked_at === null;
+        }
+        const limite = (locked as { lt?: Date } | undefined)?.lt;
+        return (
+          limite instanceof Date &&
+          linha.locked_at !== null &&
+          linha.locked_at.getTime() < limite.getTime()
+        );
+      });
+    }
+
+    it('devolve à fila os running com locked_at anterior ao limite, direto no SQL', async () => {
+      const staleBefore = new Date('2026-10-31T11:55:00.000Z');
+      prisma.jobs.updateMany.mockResolvedValue({ count: 2 });
+
+      const total = await repository.requeueStaleRunningJobs(staleBefore);
+
+      expect(total).toBe(2);
+      expect(prisma.jobs.updateMany).toHaveBeenCalledWith({
+        where: {
+          status: 'running',
+          OR: [{ locked_at: null }, { locked_at: { lt: staleBefore } }],
+        },
+        data: { status: 'queued', locked_at: null },
+      });
+    });
+
+    it('mantém running o job com locked_at recente, só o antigo volta para a fila', async () => {
+      const staleBefore = new Date('2026-10-31T11:55:00.000Z');
+      const linhas = [
+        montarLinha(1, 'running', new Date('2026-10-31T11:50:00.000Z')),
+        montarLinha(2, 'running', new Date('2026-10-31T11:58:00.000Z')),
+      ];
+      prisma.jobs.updateMany.mockImplementation(
+        (argumentos: {
+          where: { status?: string; OR?: Array<Record<string, unknown>> };
+          data: { status: string; locked_at: null };
+        }) => {
+          const afetadas = linhas.filter((linha) =>
+            casarWhere(linha, argumentos.where),
+          );
+          for (const linha of afetadas) {
+            linha.status = argumentos.data.status;
+            linha.locked_at = argumentos.data.locked_at;
+          }
+          return Promise.resolve({ count: afetadas.length });
+        },
+      );
+
+      const total = await repository.requeueStaleRunningJobs(staleBefore);
+
+      expect(total).toBe(1);
+      expect(linhas[0]).toEqual(montarLinha(1, 'queued', null));
+      expect(linhas[1]).toEqual(
+        montarLinha(2, 'running', new Date('2026-10-31T11:58:00.000Z')),
+      );
     });
   });
 });
