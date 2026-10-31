@@ -1,0 +1,39 @@
+# Caddyfile do Podcast Editor (Documento Técnico 15.2).
+# Só o Caddy fica aberto para a internet; a API responde atrás dele.
+#
+# Variáveis de ambiente:
+#   DOMAIN        domínio público, com HTTPS automático (padrão: localhost)
+#   API_UPSTREAM  endereço da API NestJS (padrão: 127.0.0.1:3000)
+#   APP_WEB_ROOT  pasta do app web exportado (padrão: /srv/podcast-editor/app/dist)
+#
+# Uso: DOMAIN=editor.exemplo.com caddy run --config api/Caddyfile
+
+{$DOMAIN:localhost} {
+	# SSE do progresso: sem buffer, senão os eventos chegam em bloco (Documento Técnico 12).
+	handle /v1/projects/*/events {
+		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000} {
+			flush_interval -1
+		}
+	}
+
+	handle /v1/* {
+		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
+	}
+
+	@docs path /docs /docs/* /docs-json
+	handle @docs {
+		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
+	}
+
+	handle /health {
+		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
+	}
+
+	# App web estático gerado por "expo export -p web" (Documento Técnico 15.3).
+	handle {
+		encode zstd gzip
+		root * {$APP_WEB_ROOT:/srv/podcast-editor/app/dist}
+		try_files {path} {path}.html {path}/index.html /index.html
+		file_server
+	}
+}
