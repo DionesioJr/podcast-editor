@@ -1,3 +1,24 @@
+const fs = require('fs');
+const path = require('path');
+
+const logDir = process.env.PM2_LOG_DIR || '/var/log/pm2';
+
+try {
+  fs.mkdirSync(logDir, { recursive: true });
+} catch {
+  // Melhor esforço: o caminho pode não existir ou não ser gravável.
+}
+
+const apiLogs = {
+  error_file: path.join(logDir, 'podcast-api-error.log'),
+  out_file: path.join(logDir, 'podcast-api-out.log'),
+};
+
+const workerLogs = {
+  error_file: path.join(logDir, 'podcast-worker-error.log'),
+  out_file: path.join(logDir, 'podcast-worker-out.log'),
+};
+
 module.exports = {
   apps: [
     {
@@ -12,8 +33,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
       },
-      error_file: '/var/log/pm2/podcast-api-error.log',
-      out_file: '/var/log/pm2/podcast-api-out.log',
+      ...apiLogs,
       merge_logs: true,
       time: true,
     },
@@ -29,8 +49,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
       },
-      error_file: '/var/log/pm2/podcast-worker-error.log',
-      out_file: '/var/log/pm2/podcast-worker-out.log',
+      ...workerLogs,
       merge_logs: true,
       time: true,
     },
