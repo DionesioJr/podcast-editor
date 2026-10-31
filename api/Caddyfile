@@ -21,6 +21,11 @@
 		}
 	}
 
+	# /v1/* cobre as rotas com subcaminho; este handle cobre a rota nua /v1.
+	handle /v1 {
+		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
+	}
+
 	handle /v1/* {
 		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000}
 	}
