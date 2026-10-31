@@ -26,6 +26,7 @@ Pré-requisitos da VPS (uma única vez):
   - api/.env completo, como em api/.env.example
   - app/.env com EXPO_PUBLIC_API_URL apontando para o domínio público
   - Caddy rodando com api/Caddyfile (veja as variáveis no cabeçalho dele)
+  - Backup diário agendado (uma única vez): sudo bash api/scripts/install-backup-cron.sh
 
 Passos executados: git pull, build da API, migrações do Prisma,
 reload do PM2 e export web do app.

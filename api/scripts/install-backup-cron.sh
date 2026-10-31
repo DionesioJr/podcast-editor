@@ -61,8 +61,23 @@ if [[ "$CRON_FILE" == /etc/* && "${EUID}" -ne 0 ]]; then
   fail "Escrever em $CRON_FILE exige root. Rode com sudo."
 fi
 
-read -r -a campos <<<"$CRON_SCHEDULE"
-[[ ${#campos[@]} -eq 5 ]] || fail "CRON_SCHEDULE inválido: '$CRON_SCHEDULE'. Use cinco campos, como em '0 3 * * *'."
+# Só entram números e os símbolos de cron, em exatamente cinco campos separados
+# por um espaço: quebra de linha, % e aspas não chegam ao arquivo do cron.
+CRON_SCHEDULE_RE='^[0-9*/,-]+( [0-9*/,-]+){4}$'
+[[ "$CRON_SCHEDULE" =~ $CRON_SCHEDULE_RE ]] || fail "CRON_SCHEDULE inválido: '$CRON_SCHEDULE'. Use cinco campos numéricos, como em '0 3 * * *'."
+
+CRON_USER_RE='^[a-z_][a-z0-9_-]*$'
+[[ "$CRON_USER" =~ $CRON_USER_RE ]] || fail "CRON_USER inválido: '$CRON_USER'. Use um nome de usuário Unix."
+
+check_path() {
+  local nome="$1" valor="$2"
+  if [[ "$valor" == *[[:space:]%]* ]]; then
+    fail "$nome não pode ter espaço, quebra de linha nem '%': '$valor'."
+  fi
+}
+check_path "CRON_FILE" "$CRON_FILE"
+check_path "BACKUP_SCRIPT" "$BACKUP_SCRIPT"
+check_path "BACKUP_LOG" "$BACKUP_LOG"
 
 # O cron roda com PATH mínimo; sem ele o backup.sh não acha gzip, find e o dump.
 conteudo="$(cat <<TXT
