@@ -1,7 +1,12 @@
+const { compilerOptions } = require('./tsconfig.json');
+
+const toJestPattern = (target) =>
+  `<rootDir>/${target.replace(/^\.\//, '').replace('*', '$1')}`;
+
 module.exports = {
   preset: 'jest-expo',
   moduleNameMapper: {
-    '^@src/(.*)$': '<rootDir>/src/$1',
-    '^@/(.*)$': '<rootDir>/$1',
+    '^@src/(.*)$': toJestPattern(compilerOptions.paths['@src/*'][0]),
+    '^@/(.*)$': toJestPattern(compilerOptions.paths['@/*'][0]),
   },
 };
