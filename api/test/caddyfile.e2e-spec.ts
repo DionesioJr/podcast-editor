@@ -3,6 +3,7 @@ import * as path from 'path';
 
 const RAIZ_DA_API = path.resolve(__dirname, '..');
 const CAMINHO_CADDYFILE = path.join(RAIZ_DA_API, 'Caddyfile');
+const CAMINHO_DEPLOY = path.join(RAIZ_DA_API, 'deploy.sh');
 
 function posicao(texto: string, trecho: string): number {
   const indice = texto.indexOf(trecho);
@@ -78,6 +79,27 @@ describe('Caddyfile: fluxo SSE sem buffer (e2e)', () => {
     expect(fonte).toContain('@sse path_regexp ^/v1/projects/[^/]+/events$');
   });
 
+  it('não usa o matcher path com curinga no meio do caminho, que o Caddy não aceita', () => {
+    expect(fonte).not.toMatch(/path\s+\/v1\/projects\/\*/);
+  });
+
+  it('casa os caminhos reais de eventos e recusa os caminhos parecidos', () => {
+    const definicao = fonte.match(/@sse\s+path_regexp\s+(\S+)/);
+
+    if (!definicao) {
+      throw new Error('Matcher @sse com path_regexp não encontrado no Caddyfile');
+    }
+
+    const padrao = new RegExp(definicao[1]);
+
+    expect(padrao.test('/v1/projects/abc/events')).toBe(true);
+    expect(padrao.test('/v1/projects/123e4567-e89b/events')).toBe(true);
+    expect(padrao.test('/v1/projects/abc/events/extra')).toBe(false);
+    expect(padrao.test('/v1/projects/abc/events2')).toBe(false);
+    expect(padrao.test('/v1/projects/events')).toBe(false);
+    expect(padrao.test('/v1/other/abc/events')).toBe(false);
+  });
+
   it('define a rota específica de eventos antes da rota genérica /v1', () => {
     expect(posicao(fonte, 'handle @sse')).toBeLessThan(
       posicao(fonte, 'handle /v1/*'),
@@ -112,5 +134,13 @@ describe('Caddyfile: app web estático (e2e)', () => {
     expect(posicao(fonte, 'handle /v1/*')).toBeLessThan(
       posicao(fonte, 'handle {'),
     );
+  });
+
+  it('aponta para app/dist, o mesmo destino que o deploy.sh exporta', () => {
+    const deploy = fs.readFileSync(CAMINHO_DEPLOY, 'utf8');
+
+    expect(deploy).toMatch(/APP_DIR="\$REPO_DIR\/app"/);
+    expect(deploy).toMatch(/expo export -p web --output-dir dist/);
+    expect(blocoEstatico).toMatch(/\{\$APP_WEB_ROOT:[^}]*\/app\/dist\}/);
   });
 });

@@ -92,7 +92,18 @@ describe('deploy.sh: passos do deploy (e2e)', () => {
   });
 
   it('exporta o app web para a pasta dist do app', () => {
+    expect(corpo).toMatch(/APP_DIR="\$REPO_DIR\/app"/);
     expect(corpo).toMatch(/expo export -p web --output-dir dist/);
+  });
+
+  it('força NODE_ENV=production depois de carregar o .env, para o PM2 não subir em desenvolvimento', () => {
+    expect(corpo).toMatch(/export NODE_ENV=production/);
+    expect(posicao(corpo, 'export NODE_ENV=production')).toBeGreaterThan(
+      posicao(corpo, 'load_env "$API_DIR/.env"'),
+    );
+    expect(posicao(corpo, 'export NODE_ENV=production')).toBeLessThan(
+      posicao(corpo, 'pm2 startOrReload'),
+    );
   });
 
   it('respeita a ordem do Documento Técnico 15.3: pull, build, migrações, PM2 e web', () => {

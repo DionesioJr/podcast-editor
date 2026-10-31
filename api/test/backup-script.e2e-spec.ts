@@ -107,4 +107,14 @@ describe('backup.sh: retenção de 7 dias (e2e)', () => {
     expect(fonte).toMatch(/BACKUP_DIR:-/);
     expect(fonte).toMatch(/RETENTION_DAYS:-/);
   });
+
+  it('com 7 dias de padrão, mantém exatamente 7 backups diários', () => {
+    const dias = Number(fonte.match(/RETENTION_DAYS:-(\d+)/)?.[1]);
+    const deslocamento = Number(
+      fonte.match(/-mtime "\+\$\(\(RETENTION_DAYS - (\d+)\)\)"/)?.[1],
+    );
+
+    expect(dias).toBe(7);
+    expect(dias - deslocamento).toBe(6);
+  });
 });
