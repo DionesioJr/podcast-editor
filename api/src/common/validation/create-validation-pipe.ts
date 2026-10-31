@@ -17,13 +17,11 @@ export function createValidationPipe(): ValidationPipe {
         })
         .join('; ');
 
-      const exception = new UnprocessableEntityException(message);
-      (exception as any).response = {
+      return new UnprocessableEntityException({
         statusCode: 422,
         code: 'VALIDATION_ERROR',
         message,
-      };
-      return exception;
+      });
     },
   });
 }
