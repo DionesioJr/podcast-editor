@@ -83,7 +83,7 @@ describe('validate (variáveis de ambiente)', () => {
   it('não expõe o nome de variáveis de ambiente específicas na mensagem de erro', () => {
     try {
       validate(envSemVariavel('DATABASE_URL'));
-      fail('deveria ter lançado erro de configuração inválida');
+      throw new Error('deveria ter lançado erro de configuração inválida');
     } catch (erro: any) {
       expect(erro.message).not.toContain('DATABASE_URL');
       expect(erro.message).not.toContain('FILE_URL_SECRET');

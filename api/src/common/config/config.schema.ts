@@ -23,32 +23,32 @@ export class EnvironmentVariables {
   PORT: number = 3000;
 
   @IsString()
-  DATABASE_URL: string;
+  DATABASE_URL!: string;
 
   @IsString()
   @IsOptional()
   DATA_DIR: string = '/data';
 
   @IsString()
-  FILE_URL_SECRET: string;
+  FILE_URL_SECRET!: string;
 
   @IsString()
-  OPENAI_API_KEY: string;
+  OPENAI_API_KEY!: string;
 
   @IsString()
-  OPENAI_TRANSCRIBE_MODEL: string;
+  OPENAI_TRANSCRIBE_MODEL!: string;
 
   @IsString()
-  OPENAI_DIARIZE_MODEL: string;
+  OPENAI_DIARIZE_MODEL!: string;
 
   @IsString()
-  OPENAI_LLM_MODEL: string;
+  OPENAI_LLM_MODEL!: string;
 
   @IsNumber()
-  MIN_FREE_DISK_GB: number;
+  MIN_FREE_DISK_GB!: number;
 
   @IsNumber()
-  EXPORT_CONCURRENCY: number;
+  EXPORT_CONCURRENCY!: number;
 
   @IsNumber()
   @IsOptional()
