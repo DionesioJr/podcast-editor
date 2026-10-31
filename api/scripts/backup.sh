@@ -15,6 +15,14 @@ set -euo pipefail
 log() { printf '[backup] %s\n' "$1"; }
 fail() { printf '[backup] ERRO: %s\n' "$1" >&2; exit 1; }
 
+# O dump só é publicado depois de completo; qualquer saída (erro ou sinal)
+# remove o .partial para a pasta nunca ficar com arquivo pela metade.
+partial=""
+cleanup_partial() {
+  [[ -n "$partial" && -f "$partial" ]] && rm -f "$partial" || true
+}
+trap cleanup_partial EXIT
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/../.env"
 
@@ -120,4 +128,4 @@ mv "$partial" "$target"
 find "$BACKUP_DIR" -maxdepth 1 -type f -name 'podcast_editor_*.sql.gz' -mtime "+$((RETENTION_DAYS - 1))" -delete
 
 log "Backup concluído em $BACKUP_DIR:"
-find "$BACKUP_DIR" -maxdepth 1 -type f -name 'podcast_editor_*.sql.gz' -printf '%f\n' | sort
+find "$BACKUP_DIR" -maxdepth 1 -type f -name 'podcast_editor_*.sql.gz' | sed 's#.*/##' | sort
