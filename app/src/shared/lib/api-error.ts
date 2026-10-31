@@ -1,10 +1,14 @@
 import { getErrorMessage } from '@src/i18n';
 
 export class ApiError extends Error {
-  constructor(public code: string, public statusCode: number = 500) {
-    const message = getErrorMessage(code);
-    super(message);
+  readonly code: string;
+  readonly statusCode: number;
+
+  constructor(code: string, statusCode: number = 500) {
+    super(getErrorMessage(code || 'SERVER_ERROR'));
     this.name = 'ApiError';
+    this.code = code;
+    this.statusCode = statusCode;
   }
 }
 
