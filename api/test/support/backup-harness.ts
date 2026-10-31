@@ -3,42 +3,15 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
+import { ResultadoDeComando } from './shell-harness';
+
+export { descreverComShellPosix } from './shell-harness';
+
 export const RAIZ_DA_API = path.resolve(__dirname, '..', '..');
 export const CAMINHO_BACKUP = path.join(RAIZ_DA_API, 'scripts', 'backup.sh');
 export const TEM_ENV_LOCAL = fs.existsSync(path.join(RAIZ_DA_API, '.env'));
 
-export interface ResultadoDeComando {
-  status: number | null;
-  stdout: string;
-  stderr: string;
-}
-
 const pastasTemporarias: string[] = [];
-
-// Os scripts desta tarefa são bash e dependem de userland GNU na VPS Linux
-// (por exemplo find -printf); fora do Linux a execução real é pulada com aviso.
-function temShellPosix(): boolean {
-  if (process.platform !== 'linux') {
-    return false;
-  }
-
-  const resultado = spawnSync('bash', ['--version'], { encoding: 'utf8' });
-
-  return resultado.error === undefined && resultado.status === 0;
-}
-
-export const SHELL_POSIX = temShellPosix();
-
-export function descreverComShellPosix(nome: string, definir: () => void): void {
-  if (SHELL_POSIX) {
-    describe(nome, definir);
-  } else {
-    describe.skip(
-      `${nome} (pulado: é preciso Linux com bash para executar os scripts)`,
-      definir,
-    );
-  }
-}
 
 export function criarPastaTemporaria(): string {
   const pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'pde-backup-'));

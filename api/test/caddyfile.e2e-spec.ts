@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
+import { ResultadoDeComando } from './support/shell-harness';
+
 const RAIZ_DA_API = path.resolve(__dirname, '..');
 const CAMINHO_CADDYFILE = path.join(RAIZ_DA_API, 'Caddyfile');
 const CAMINHO_DEPLOY = path.join(RAIZ_DA_API, 'deploy.sh');
@@ -146,12 +148,6 @@ describe('Caddyfile: app web estático (e2e)', () => {
     expect(blocoEstatico).toMatch(/\{\$APP_WEB_ROOT:[^}]*\/app\/dist\}/);
   });
 });
-
-interface ResultadoDeComando {
-  status: number | null;
-  stdout: string;
-  stderr: string;
-}
 
 function temCaddy(): boolean {
   const resultado = spawnSync('caddy', ['version'], { encoding: 'utf8' });
