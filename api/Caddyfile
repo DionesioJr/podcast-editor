@@ -4,11 +4,13 @@
 # Variáveis de ambiente:
 #   DOMAIN        domínio público, com HTTPS automático (padrão: localhost)
 #   API_UPSTREAM  endereço da API NestJS (padrão: 127.0.0.1:3000)
-#   APP_WEB_ROOT  pasta onde o deploy.sh exporta o app web (padrão:
-#                 /srv/podcast-editor/app/dist, que é app/dist com o repositório
-#                 em /srv/podcast-editor); aponte aqui se clonar em outro lugar
+#   APP_WEB_ROOT  pasta onde o deploy.sh exporta o app web. O deploy grava o
+#                 caminho real em api/.env.caddy e o Caddy o carrega com
+#                 --envfile, então a web serve a mesma pasta exportada mesmo com
+#                 o repositório clonado fora de /srv/podcast-editor. O padrão
+#                 abaixo vale quando o repositório está em /srv/podcast-editor
 #
-# Uso: DOMAIN=editor.exemplo.com caddy run --config api/Caddyfile
+# Uso: DOMAIN=editor.exemplo.com caddy run --config api/Caddyfile --envfile api/.env.caddy
 
 # Upstream único da API: trocar host ou porta aqui vale para todos os handles
 # que fazem import. O bloco SSE fica de fora porque precisa desligar o buffer.

@@ -8,6 +8,7 @@
 #   REPO_DIR       raiz do repositório (padrão: pasta acima de api/)
 #   DEPLOY_BRANCH  branch a publicar (padrão: a branch atual do repositório)
 #   PM2_CONFIG     caminho do ecosystem.config.js (padrão: api/ecosystem.config.js)
+#   CADDY_ENV_FILE arquivo de ambiente do Caddy (padrão: api/.env.caddy)
 #   SKIP_APP       "1" para não exportar o app web
 
 set -euo pipefail
@@ -25,7 +26,9 @@ Pré-requisitos da VPS (uma única vez):
   - /data criado e /var/log/pm2 existindo
   - api/.env completo, como em api/.env.example
   - app/.env com EXPO_PUBLIC_API_URL apontando para o domínio público
-  - Caddy rodando com api/Caddyfile (veja as variáveis no cabeçalho dele)
+  - Caddy rodando com api/Caddyfile e --envfile api/.env.caddy (veja o
+    cabeçalho dele); o deploy grava esse arquivo a cada exportação, então o
+    Caddy serve a mesma pasta exportada, qualquer que seja o local do clone
 
 Passos executados: git pull, build da API, migrações do Prisma,
 reload do PM2 e export web do app.
@@ -44,6 +47,7 @@ REPO_DIR="${REPO_DIR:-$(dirname "$SCRIPT_DIR")}"
 API_DIR="$REPO_DIR/api"
 APP_DIR="$REPO_DIR/app"
 PM2_CONFIG="${PM2_CONFIG:-$API_DIR/ecosystem.config.js}"
+CADDY_ENV_FILE="${CADDY_ENV_FILE:-$API_DIR/.env.caddy}"
 
 [[ -d "$API_DIR" ]] || fail "Pasta da API não encontrada em $API_DIR."
 [[ -f "$PM2_CONFIG" ]] || fail "Arquivo do PM2 não encontrado em $PM2_CONFIG."
@@ -58,6 +62,19 @@ load_env() {
     source "$1"
     set +a
   fi
+}
+
+# Atualiza só a linha APP_WEB_ROOT no arquivo de ambiente do Caddy, para não
+# apagar DOMAIN e API_UPSTREAM que o operador já tenha gravado ali.
+gravar_raiz_do_app_web() {
+  local arquivo="$1" valor="$2" temporario
+  temporario="$(mktemp "${arquivo}.XXXXXX")" || fail "Não foi possível gravar a raiz do app web em $arquivo."
+  if [[ -f "$arquivo" ]]; then
+    grep -v '^APP_WEB_ROOT=' "$arquivo" > "$temporario" || true
+  fi
+  printf 'APP_WEB_ROOT=%s\n' "$valor" >> "$temporario"
+  chmod 0644 "$temporario"
+  mv "$temporario" "$arquivo"
 }
 
 load_env "$API_DIR/.env"
@@ -92,10 +109,13 @@ if [[ "${SKIP_APP:-0}" == "1" ]]; then
 else
   [[ -n "${EXPO_PUBLIC_API_URL:-}" ]] || fail "Defina EXPO_PUBLIC_API_URL em $APP_DIR/.env para exportar o app web."
   pnpm --dir "$APP_DIR" install --frozen-lockfile
-  # A saída é $APP_DIR/dist. O Caddyfile precisa do mesmo caminho em APP_WEB_ROOT
-  # (padrão /srv/podcast-editor/app/dist, igual a app/dist com o repositório em
-  # /srv/podcast-editor); ajuste APP_WEB_ROOT no Caddy se clonar em outro lugar.
   pnpm --dir "$APP_DIR" exec expo export -p web --output-dir dist
 fi
+
+# A exportação sai em $APP_DIR/dist. O deploy grava esse caminho em
+# CADDY_ENV_FILE para o Caddy (iniciado com --envfile) servir exatamente a
+# mesma pasta, mesmo com o repositório clonado fora de /srv/podcast-editor.
+gravar_raiz_do_app_web "$CADDY_ENV_FILE" "$APP_DIR/dist"
+log "Raiz do app web em $CADDY_ENV_FILE: APP_WEB_ROOT=$APP_DIR/dist"
 
 log "Deploy concluído."
