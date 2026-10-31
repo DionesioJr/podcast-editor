@@ -6,3 +6,4 @@ dist/
 .runtable/
 .expo/
 *.log
+*.tsbuildinfo
