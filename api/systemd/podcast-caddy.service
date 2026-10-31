@@ -1,0 +1,24 @@
+[Unit]
+Description=Caddy do Podcast Editor (HTTPS, proxy reverso e app web)
+Documentation=https://caddyserver.com/docs/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=caddy
+Group=caddy
+# Variáveis DOMAIN, API_UPSTREAM e APP_WEB_ROOT (modelo em podcast-caddy.env.example).
+EnvironmentFile=/etc/podcast-editor/caddy.env
+ExecStart=/usr/bin/caddy run --config /srv/podcast-editor/api/Caddyfile
+ExecReload=/usr/bin/caddy reload --config /srv/podcast-editor/api/Caddyfile --force
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+PrivateTmp=true
+ProtectSystem=full
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
