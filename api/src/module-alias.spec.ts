@@ -15,7 +15,22 @@ describe('Resolução do alias @/* no Jest', () => {
     expect(PrismaServiceViaAlias).toBe(PrismaServiceViaCaminhoRelativo);
   });
 
-  it('não resolve um alias que não existe em src, falhando como "Cannot find module"', () => {
-    expect(() => require('@/modulo/que/nao/existe')).toThrow(/Cannot find module/);
+  it('não resolve um alias que não existe em src e devolve MODULE_NOT_FOUND', () => {
+    let erroCapturado: unknown;
+
+    try {
+      require('@/modulo/que/nao/existe');
+    } catch (erro) {
+      erroCapturado = erro;
+    }
+
+    expect(erroCapturado).toBeInstanceOf(Error);
+    expect((erroCapturado as NodeJS.ErrnoException).code).toBe(
+      'MODULE_NOT_FOUND',
+    );
+  });
+
+  it('não captura pacotes do node_modules com o padrão do alias', () => {
+    expect(new RegExp('^@/(.*)$').test('@nestjs/common')).toBe(false);
   });
 });
