@@ -80,9 +80,11 @@ sudo mariadb -e "GRANT ALL PRIVILEGES ON podcast_editor.* TO 'podcast'@'localhos
 
 O provider do Prisma é `mysql` (`api/prisma/schema.prisma`), então a conexão usa `DATABASE_URL` no formato `mysql://usuario:senha@localhost:3306/podcast_editor`.
 
+Atenção à senha: se ela tiver caracteres como `@ : / # ? $` ou espaço, escreva-a percent-encoded dentro da URL (por exemplo `@` vira `%40`). Mantenha a linha de `DATABASE_URL` entre aspas no `api/.env`, porque `deploy.sh` carrega esse arquivo com `source`. Uma senha sem esses caracteres evita o problema.
+
 ## 4. Preencher api/.env e criar app/.env
 
-Os dois arquivos ficam dentro do repositório, que será clonado no passo 5. Se ainda não clonou, clone antes de editar. O `api/.env` é a cópia do exemplo versionado, e `deploy.sh` lê os dois arquivos ao rodar.
+**Antes deste passo, faça o clone do passo 5.** Os dois arquivos ficam dentro do repositório clonado. Sem o clone, os comandos abaixo não encontram `api/.env.example`. O `api/.env` é a cópia do exemplo versionado, e `deploy.sh` lê os dois arquivos ao rodar.
 
 Crie `api/.env` a partir de `api/.env.example`:
 
